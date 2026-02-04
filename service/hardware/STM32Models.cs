@@ -1,56 +1,41 @@
 namespace CoffeeMachine.service.Hardware;
 
+/// <summary>
+/// Simplified brew command - Backend sends ONLY material info per step
+/// STM32 handles all hardware control (pump, heat, grind) based on operation name
+/// </summary>
 public class STM32BrewCommand
 {
     public string CommandType { get; set; } = "BREW"; // "BREW", "INIT", "CLEAN"
-    public BrewParameters Parameters { get; set; } = new();
-}
-
-public class BrewParameters
-{
+    public int ProductId { get; set; }
     public int ProcessId { get; set; }
     public string ProductName { get; set; } = string.Empty;
-    
-    // Motor speeds (from your STM32 code)
-    public int LidSpeed { get; set; } = 500;
-    public int PistonSpeed { get; set; } = 500;
-    
-    // Positions (from your STM32 code)
-    public int TamperPosition { get; set; } = 3500;
-    public int WipeOutPosition { get; set; } = 9999;
-    
-    // Temperatures (from your STM32 code)
-    public float TargetTemperature { get; set; } = 100.0f;
-    public float PreInfusionTemp { get; set; } = 80.0f;
-    
-    // Volumes and times (from your STM32 code)
-    public float PumpVolumeMl { get; set; } = 60.0f;
-    public int GrinderDurationMs { get; set; } = 20000;
-    
-    // All brewing steps
-    public List<BrewStep> Steps { get; set; } = new();
+    public List<MaterialBasedStep> Steps { get; set; } = new();
 }
 
-public class BrewStep
+/// <summary>
+/// Each step contains: operation name + material (if used)
+/// STM32 firmware knows what to do based on operation name
+/// Material quantity is the only dynamic parameter
+/// </summary>
+public class MaterialBasedStep
 {
-    public int StepNumber { get; set; }
-    public string OperationName { get; set; } = string.Empty;
-    public string OperationType { get; set; } = string.Empty;
-    
-    // Motor control
-    public int? Direction { get; set; } // 1 or -1
-    public int? Speed { get; set; }
-    public int? TargetPosition { get; set; }
-    public int? CurrentLimitMa { get; set; }
-    public int? TimeoutMs { get; set; }
-    
-    // Temperature/flow
-    public float? Temperature { get; set; }
-    public float? FlowRateMl { get; set; }
-    
-    // Timing
-    public int? DurationMs { get; set; }
-    public int? DelayAfterMs { get; set; }
+    public int Sequence { get; set; }
+    public string OperationName { get; set; } = string.Empty; // "HEAT_WATER", "GRIND_BEANS", etc.
+    public string OperationType { get; set; } = string.Empty;  // "Heater", "Motor", "Pump", etc.
+    public StepMaterial? Material { get; set; }  // null if no material used in this step
+}
+
+/// <summary>
+/// Material information for a step
+/// </summary>
+public class StepMaterial
+{
+    public int MaterialId { get; set; }
+    public string MaterialName { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public string Unit { get; set; } = string.Empty;  // "g", "ml", "piece"
+    public string UsageType { get; set; } = string.Empty; // "Ingredient", "Container"
 }
 
 public class STM32Response

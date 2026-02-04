@@ -58,7 +58,10 @@ public class ProcessExecutionService : IProcessExecutionService
             var command = new STM32BrewCommand
             {
                 CommandType = "INIT",
-                Parameters = new BrewParameters()
+                ProductId = 0,
+                ProcessId = 0,
+                ProductName = "Initialization",
+                Steps = new List<MaterialBasedStep>()
             };
 
             var response = await _stm32.SendCommandAsync(command);
@@ -118,7 +121,7 @@ public class ProcessExecutionService : IProcessExecutionService
             // Build STM32 command
             result.ExecutionLog.Add("🔧 Building command for STM32...");
             var command = await _parameterService.BuildSTM32BrewCommandAsync(processId);
-            result.ExecutionLog.Add($"✓ Command built with {command.Parameters.Steps.Count} steps");
+            result.ExecutionLog.Add($"✓ Command built with {command.Steps.Count} steps");
 
             // Send to STM32
             result.ExecutionLog.Add("📤 Sending command to STM32...");
@@ -173,7 +176,10 @@ public class ProcessExecutionService : IProcessExecutionService
             var command = new STM32BrewCommand
             {
                 CommandType = "CLEAN",
-                Parameters = new BrewParameters()
+                ProductId = 0,
+                ProcessId = 0,
+                ProductName = "Cleaning Cycle",
+                Steps = new List<MaterialBasedStep>()
             };
 
             var response = await _stm32.SendCommandAsync(command);

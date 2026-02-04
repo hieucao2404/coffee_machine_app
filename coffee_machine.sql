@@ -48,14 +48,21 @@ CREATE TABLE process_operation (
 );
 
 CREATE TABLE processed_material (
+  processed_material_id SERIAL PRIMARY KEY,
   process_id INTEGER NOT NULL REFERENCES process(process_id),
   material_id INTEGER NOT NULL REFERENCES material(material_id),
   quantity NUMERIC NOT NULL,
   usage_type VARCHAR,
-  PRIMARY KEY (process_id, material_id)
+  sequence INTEGER  -- Links to process_operation.sequence (NULL = used across all steps or not tied to specific step)
 );
 
-SELECT *  FROM material;
+SELECT * FROM processed_material
+
+SELECT *  FROM process_operation
+SELECT *  FROM operation
+SELECT *  FROM process
+
+SELECT * FROM product
 
 
 
@@ -120,17 +127,17 @@ INSERT INTO process_operation (process_id, operation_id, sequence, speed, temper
 (2, 3, 4, NULL, 93.0, 30000);
 
 -- Processed Material (The Ingredients used in Process #1 - Espresso)
-INSERT INTO processed_material (process_id, material_id, quantity, usage_type) VALUES
-(1, 1, 18.00, 'Ingredient'),  -- 18g Beans
-(1, 2, 35.00, 'Ingredient'),  -- 35ml Water
-(1, 4, 1.00, 'Container');    -- 1 Cup
+INSERT INTO processed_material (process_id, material_id, quantity, usage_type, sequence) VALUES
+(1, 1, 18.00, 'Ingredient', 2),  -- 18g Beans used in Step 2 (GRIND_BEANS)
+(1, 2, 35.00, 'Ingredient', 3),  -- 35ml Water used in Step 3 (PUMP_PRESSURE)
+(1, 4, 1.00, 'Container', NULL); -- 1 Cup (not tied to specific step)
 
 -- Processed Material (The Ingredients used in Process #2 - Cappuccino)
-INSERT INTO processed_material (process_id, material_id, quantity, usage_type) VALUES
-(2, 1, 18.00, 'Ingredient'),  -- Beans
-(2, 2, 35.00, 'Ingredient'),  -- Water
-(2, 3, 150.00, 'Ingredient'), -- 150ml Milk
-(2, 4, 1.00, 'Container');    -- Cup
+INSERT INTO processed_material (process_id, material_id, quantity, usage_type, sequence) VALUES
+(2, 1, 18.00, 'Ingredient', 3),   -- Beans used in Step 3 (GRIND_BEANS)
+(2, 2, 35.00, 'Ingredient', 4),   -- Water used in Step 4 (PUMP_COFFEE)
+(2, 3, 150.00, 'Ingredient', 2),  -- 150ml Milk used in Step 2 (STEAM_MILK)
+(2, 4, 1.00, 'Container', NULL);  -- Cup
 
 -- 1. Add specific hardware limit columns
 ALTER TABLE process_operation 

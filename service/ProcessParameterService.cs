@@ -76,100 +76,43 @@ public class ProcessParameterService : IProcessParameterService
         var command = new STM32BrewCommand
         {
             CommandType = "BREW",
-            Parameters = new BrewParameters
-            {
-                ProcessId = process.ProcessId,
-                ProductName = process.Product?.ProductName ?? "Unknown"
-            }
+            ProductId = process.Product?.ProductId ?? 0,
+            ProcessId = process.ProcessId,
+            ProductName = process.Product?.ProductName ?? "Unknown",
+            Steps = new List<MaterialBasedStep>()
         };
 
-        // Map database operations to STM32 brewing steps
+        // Build simplified steps: operation name + material only
         foreach (var op in process.ProcessOperations.OrderBy(po => po.Sequence))
         {
-            var step = new BrewStep
+            var step = new MaterialBasedStep
             {
-                StepNumber = op.Sequence,
+                Sequence = op.Sequence,
                 OperationName = op.Operation?.OperationName ?? "Unknown",
-                OperationType = op.Operation?.Type ?? "Unknown"
+                OperationType = op.Operation?.Type ?? "Unknown",
+                Material = null  // Will be filled if material exists for this step
             };
 
-            // Map based on operation name
-            switch (op.Operation?.OperationName?.ToUpper())
+            // Find material used in this specific step (matched by sequence)
+            var material = process.ProcessedMaterials
+                .FirstOrDefault(pm => pm.Sequence == op.Sequence);
+
+            if (material != null && material.Material != null)
             {
-                case "GRIND_BEANS":
-                    step.DurationMs = op.Duration ?? 20000;
-                    command.Parameters.GrinderDurationMs = step.DurationMs.Value;
-                    break;
-
-                case "CLOSE_LID":
-                    step.Direction = -1;
-                    step.Speed = op.Speed ?? 500;
-                    step.CurrentLimitMa = op.CurrentLimitMa ?? 1600;
-                    step.TimeoutMs = op.Duration ?? 1000;
-                    command.Parameters.LidSpeed = step.Speed.Value;
-                    break;
-
-                case "OPEN_LID":
-                    step.Direction = 1;
-                    step.Speed = op.Speed ?? 500;
-                    step.TargetPosition = op.TargetPosition ?? 200;
-                    step.TimeoutMs = op.Duration ?? 500;
-                    command.Parameters.LidSpeed = step.Speed.Value;
-                    break;
-
-                case "TAMP_COFFEE":
-                case "TAMPER":
-                    step.Direction = 1;
-                    step.Speed = op.Speed ?? 500;
-                    step.TargetPosition = op.TargetPosition ?? 3500;
-                    step.CurrentLimitMa = op.CurrentLimitMa ?? 3500;
-                    step.TimeoutMs = op.Duration ?? 400;
-                    command.Parameters.PistonSpeed = step.Speed.Value;
-                    command.Parameters.TamperPosition = step.TargetPosition.Value;
-                    break;
-
-                case "MOVE_PISTON":
-                case "PISTON_UP":
-                case "PISTON_DOWN":
-                    step.Direction = op.TargetPosition > 0 ? 1 : -1;
-                    step.Speed = op.Speed ?? 500;
-                    step.TargetPosition = op.TargetPosition ?? 0;
-                    step.CurrentLimitMa = op.CurrentLimitMa ?? 500;
-                    step.TimeoutMs = op.Duration ?? 3000;
-                    command.Parameters.PistonSpeed = step.Speed.Value;
-                    
-                    if (op.TargetPosition >= 9000)
-                    {
-                        command.Parameters.WipeOutPosition = op.TargetPosition.Value;
-                    }
-                    break;
-
-                case "HEAT_WATER":
-                    step.Temperature = (float)(op.Temperature ?? 100.0m);
-                    command.Parameters.TargetTemperature = step.Temperature.Value;
-                    break;
-
-                case "PUMP_WATER":
-                case "INFUSE_WATER":
-                case "MAIN_INFUSION":
-                    step.FlowRateMl = 60.0f;
-                    step.Temperature = (float)(op.Temperature ?? 80.0m);
-                    command.Parameters.PumpVolumeMl = step.FlowRateMl.Value;
-                    command.Parameters.PreInfusionTemp = step.Temperature.Value;
-                    break;
-
-                case "DELAY":
-                case "WAIT":
-                    step.DurationMs = op.Duration ?? 2000;
-                    break;
+                step.Material = new StepMaterial
+                {
+                    MaterialId = material.MaterialId,
+                    MaterialName = material.Material.MaterialName,
+                    Quantity = material.Quantity,
+                    Unit = material.Material.MaterialUnit ?? "",
+                    UsageType = material.UsageType ?? "Ingredient"
+                };
             }
 
-            step.DelayAfterMs = 5000;
-            command.Parameters.Steps.Add(step);
+            command.Steps.Add(step);
         }
 
-        _logger.LogInformation(
-            $"Built STM32 command for '{command.Parameters.ProductName}' with {command.Parameters.Steps.Count} steps");
+        _logger.LogInformation($"Built STM32 command for {command.ProductName} with {command.Steps.Count} steps");
         
         return command;
     }

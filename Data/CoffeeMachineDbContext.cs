@@ -75,14 +75,13 @@ public class CoffeeMachineDbContext : DbContext
 
         // Map ProcessedMaterial entity
         modelBuilder.Entity<ProcessedMaterial>().ToTable("processed_material");
+        modelBuilder.Entity<ProcessedMaterial>().HasKey(pm => pm.ProcessedMaterialId);
+        modelBuilder.Entity<ProcessedMaterial>().Property(pm => pm.ProcessedMaterialId).HasColumnName("processed_material_id");
         modelBuilder.Entity<ProcessedMaterial>().Property(pm => pm.ProcessId).HasColumnName("process_id");
         modelBuilder.Entity<ProcessedMaterial>().Property(pm => pm.MaterialId).HasColumnName("material_id");
         modelBuilder.Entity<ProcessedMaterial>().Property(pm => pm.Quantity).HasColumnName("quantity");
         modelBuilder.Entity<ProcessedMaterial>().Property(pm => pm.UsageType).HasColumnName("usage_type");
-
-        // Configure ProcessedMaterial composite key
-        modelBuilder.Entity<ProcessedMaterial>()
-            .HasKey(pm => new { pm.ProcessId, pm.MaterialId });
+        modelBuilder.Entity<ProcessedMaterial>().Property(pm => pm.Sequence).HasColumnName("sequence");
 
         // Configure relationships
         modelBuilder.Entity<Process>()
