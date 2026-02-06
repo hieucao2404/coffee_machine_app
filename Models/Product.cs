@@ -9,10 +9,9 @@ public class Product {
     public decimal? Price{get; set;}
     public string? Description{get; set;}
     public bool IsActive{get; set;} =true;
-    public DateTime CreatedAt {get; set;} = DateTime.UtcNow;
-    public DateTime UpdatedAt {get; set;} = DateTime.UtcNow;
+    public string? ImageUrl{get;set;}  // Changed from Image to ImageUrl
+    public DateTime? CreatedAt {get; set;}
+    public DateTime? UpdatedAt {get; set;}
 
     public ICollection<Process> Processes {get; set;} = new List<Process>();
-
-
 }

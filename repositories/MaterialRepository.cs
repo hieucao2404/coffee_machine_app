@@ -16,7 +16,7 @@ public class MaterialRepository : Repository<Material>, IMaterialRepository
     public async Task<IEnumerable<Material>> GetConsumableMaterialsAsync()
     {
         return await _context.Materials
-            .Where(m => m.IsConsumable)
+            .Where(m => m.IsConsumable == true)
             .ToListAsync();
     }
 

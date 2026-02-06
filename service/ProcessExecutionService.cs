@@ -213,10 +213,10 @@ public class ProcessExecutionService : IProcessExecutionService
         foreach (var pm in process.ProcessedMaterials)
         {
             var material = await _materialRepo.GetByIdAsync(pm.MaterialId);
-            if (material != null && material.IsConsumable)
+            if (material != null && material.IsConsumable == true)
             {
-                var oldStock = material.StockQuantity;
-                var newStock = material.StockQuantity - pm.Quantity;
+                var oldStock = material.StockQuantity ?? 0;
+                var newStock = (material.StockQuantity ?? 0) - pm.Quantity;
                 await _materialRepo.UpdateStockQuantityAsync(pm.MaterialId, newStock);
                 
                 result.ExecutionLog.Add(

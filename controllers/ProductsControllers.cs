@@ -10,11 +10,16 @@ namespace CoffeeMachine.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
+    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ProductsController> _logger;
 
-    public ProductsController(IProductService productService, ILogger<ProductsController> logger)
+    public ProductsController(
+        IProductService productService,
+        IWebHostEnvironment environment,
+        ILogger<ProductsController> logger)
     {
         _productService = productService;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -58,30 +63,48 @@ public class ProductsController : ControllerBase
     /// Create a new product
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<ProductResponseDTO>> CreateProduct([FromBody] ProductCreateDTO createDto)
+    public async Task<ActionResult<ProductResponseDTO>> CreateProduct(
+        [FromForm] ProductCreateDTO dto,
+        [FromForm] IFormFile? image)
     {
-        try
+        if (image != null)
         {
-            var product = await _productService.CreateProductAsync(createDto);
-            return CreatedAtAction(nameof(GetProduct), new { id = product.ProductId }, product);
+            var imageUrl = await SaveImageAsync(image, "products");
+            if (imageUrl == null)
+                return BadRequest(new { error = "Failed to upload image" });
+            
+            dto.ImageUrl = imageUrl;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating product");
-            return BadRequest(new { message = ex.Message });
-        }
+
+        var product = await _productService.CreateProductAsync(dto);
+        if (product == null)
+            return BadRequest(new { error = "Failed to create product" });
+
+        return CreatedAtAction(nameof(GetProduct), new { id = product.ProductId }, product);
     }
 
     /// <summary>
     /// Update a product
     /// </summary>
     [HttpPut("{id}")]
-    public async Task<ActionResult<ProductResponseDTO>> UpdateProduct(int id, [FromBody] ProductUpdateDTO updateDto)
+    public async Task<ActionResult<ProductResponseDTO>> UpdateProduct(
+        int id,
+        [FromForm] ProductUpdateDTO dto,
+        [FromForm] IFormFile? image)
     {
-        var product = await _productService.UpdateProductAsync(id, updateDto);
+        if (image != null)
+        {
+            var imageUrl = await SaveImageAsync(image, "products");
+            if (imageUrl == null)
+                return BadRequest(new { error = "Failed to upload image" });
+            
+            dto.ImageUrl = imageUrl;
+        }
+
+        var product = await _productService.UpdateProductAsync(id, dto);
         if (product == null)
-            return NotFound(new { message = $"Product with ID {id} not found" });
-        
+            return NotFound(new { error = $"Product {id} not found" });
+
         return Ok(product);
     }
 
@@ -194,5 +217,55 @@ public class ProductsController : ControllerBase
     {
         var map = await _productService.GetProductMaterialsMapByNameAsync();
         return Ok(map);
+    }
+
+    // Add the same SaveImageAsync helper method
+    private async Task<string?> SaveImageAsync(IFormFile file, string folder)
+    {
+        try {
+            //Validate file type
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if(!allowedExtensions.Contains(extension)){
+                _logger.LogWarning("Invalid file type: {Extension}", extension);
+                return null;
+            }
+
+            //validate file size
+            if(file.Length > 5 * 1024 * 1024) {
+                _logger.LogWarning("File too large: {Size} bytes ", file.Length);
+                return null;
+            }
+
+            //Create unique filename
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var uploadPath = Path.Combine(_environment.WebRootPath, "images", folder);
+
+             // Create directory if it doesn't exist
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+                _logger.LogInformation("Created directory: {Path}", uploadPath);
+            }
+
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // Save file
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var imageUrl = $"/images/{folder}/{fileName}";
+            _logger.LogInformation("Image saved: {ImageUrl}", imageUrl);
+
+            return imageUrl;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save image");
+            return null;
+        }
     }
 }

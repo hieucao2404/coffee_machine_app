@@ -10,13 +10,14 @@ public class ProductDTO {
 
 public class ProductCreateDTO
 {
-    public string? ProductCode { get; set; }
+    public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
     public string? ProductType { get; set; }
     public string? Category { get; set; }
     public decimal? Price { get; set; }
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? ImageUrl { get; set; }  // ← NEW
 }
 public class ProductUpdateDTO
 {
@@ -27,19 +28,22 @@ public class ProductUpdateDTO
     public decimal? Price { get; set; }
     public string? Description { get; set; }
     public bool? IsActive { get; set; }
+    public string? ImageUrl{get; set;}
 }
+
 
 
 public class ProductResponseDTO
 {
     public int ProductId { get; set; }
-    public string? ProductCode { get; set; }
+    public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
     public string? ProductType { get; set; }
     public string? Category { get; set; }
     public decimal? Price { get; set; }
     public string? Description { get; set; }
     public bool IsActive { get; set; }
+    public string? ImageUrl { get; set; }  // ← NEW
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

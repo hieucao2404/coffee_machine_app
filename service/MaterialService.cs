@@ -15,7 +15,6 @@ public class MaterialService : IMaterialService
         _materialRepository = materialRepository;
         _logger = logger;
     }
-
     public async Task<MaterialResponseDTO> CreateMaterialAsync(MaterialCreateDTO createDto)
     {
         _logger.LogInformation("Creating new material: {MaterialName}", createDto.MaterialName);
@@ -27,6 +26,7 @@ public class MaterialService : IMaterialService
             CostPerUnit = createDto.CostPerUnit,
             StockQuantity = createDto.StockQuantity,
             IsConsumable = createDto.IsConsumable,
+            ImageUrl = createDto.ImageUrl,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -50,40 +50,54 @@ public class MaterialService : IMaterialService
         return materials.Select(MapToResponseDTO);
     }
 
-    public async Task<MaterialResponseDTO?> UpdateMaterialAsync(int materialId, MaterialUpdateDTO updateDto)
+    public async Task<MaterialResponseDTO?> UpdateMaterialAsync(int id, MaterialUpdateDTO dto)
     {
-        _logger.LogInformation("Updating material: {MaterialId}", materialId);
+        _logger.LogInformation("Updating material: {MaterialId}", id);
 
-        var material = await _materialRepository.GetByIdAsync(materialId);
+        var material = await _materialRepository.GetByIdAsync(id);
         if (material == null)
         {
-            _logger.LogWarning("Material not found: {MaterialId}", materialId);
+            _logger.LogWarning("Material not found: {MaterialId}", id);
             return null;
         }
 
         // Update only provided fields
-        if (updateDto.MaterialName != null)
-            material.MaterialName = updateDto.MaterialName;
+        if (dto.MaterialName != null)
+            material.MaterialName = dto.MaterialName;
         
-        if (updateDto.MaterialUnit != null)
-            material.MaterialUnit = updateDto.MaterialUnit;
+        if (dto.MaterialUnit != null)
+            material.MaterialUnit = dto.MaterialUnit;
         
-        if (updateDto.CostPerUnit.HasValue)
-            material.CostPerUnit = updateDto.CostPerUnit;
+        if (dto.CostPerUnit != null)
+            material.CostPerUnit = dto.CostPerUnit;
         
-        if (updateDto.StockQuantity.HasValue)
-            material.StockQuantity = updateDto.StockQuantity.Value;
+        if (dto.StockQuantity != null)
+            material.StockQuantity = dto.StockQuantity;
         
-        if (updateDto.IsConsumable.HasValue)
-            material.IsConsumable = updateDto.IsConsumable.Value;
+        if (dto.IsConsumable != null)
+            material.IsConsumable = dto.IsConsumable;
+        
+        if (dto.ImageUrl != null)  // ← NEW
+            material.ImageUrl = dto.ImageUrl;
 
         material.UpdatedAt = DateTime.UtcNow;
 
         await _materialRepository.UpdateAsync(material);
         await _materialRepository.SaveChangesAsync();
 
-        _logger.LogInformation("Material updated successfully: {MaterialId}", materialId);
-        return MapToResponseDTO(material);
+        _logger.LogInformation("Material updated successfully: {MaterialId}", id);
+        return new MaterialResponseDTO
+        {
+            MaterialId = material.MaterialId,
+            MaterialName = material.MaterialName,
+            MaterialUnit = material.MaterialUnit,
+            CostPerUnit = material.CostPerUnit,
+            StockQuantity = material.StockQuantity,
+            IsConsumable = material.IsConsumable,
+            ImageUrl = material.ImageUrl,  // ← NEW
+            CreatedAt = material.CreatedAt ?? DateTime.UtcNow,
+            UpdatedAt = material.UpdatedAt ?? DateTime.UtcNow
+        };
     }
 
     public async Task<bool> DeleteMaterialAsync(int materialId)
@@ -119,10 +133,10 @@ public class MaterialService : IMaterialService
         switch (adjustmentDto.AdjustmentType.ToUpper())
         {
             case "ADD":
-                material.StockQuantity += adjustmentDto.AdjustmentQuantity;
+                material.StockQuantity = (material.StockQuantity ?? 0) + adjustmentDto.AdjustmentQuantity;
                 break;
             case "SUBTRACT":
-                material.StockQuantity -= adjustmentDto.AdjustmentQuantity;
+                material.StockQuantity = (material.StockQuantity ?? 0) - adjustmentDto.AdjustmentQuantity;
                 if (material.StockQuantity < 0)
                 {
                     _logger.LogWarning("Stock quantity cannot be negative. Setting to 0.");
@@ -192,8 +206,9 @@ public class MaterialService : IMaterialService
             CostPerUnit = material.CostPerUnit,
             StockQuantity = material.StockQuantity,
             IsConsumable = material.IsConsumable,
-            CreatedAt = material.CreatedAt,
-            UpdatedAt = material.UpdatedAt
+            ImageUrl = material.ImageUrl,
+            CreatedAt = material.CreatedAt ?? DateTime.UtcNow,
+            UpdatedAt = material.UpdatedAt ?? DateTime.UtcNow
         };
     }
 }

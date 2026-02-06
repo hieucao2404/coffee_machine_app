@@ -7,11 +7,12 @@ public class MaterialDTO {
 }
 
 public class MaterialCreateDTO{
-    public string MaterialName {get; set;}
+    public string MaterialName {get; set;} = string.Empty;
     public string? MaterialUnit{get;set;}
     public decimal? CostPerUnit{get; set;}
-    public decimal StockQuantity{get; set;} = 0.00m;
+    public decimal? StockQuantity{get; set;}
     public bool IsConsumable{get; set;} =true;
+    public string? ImageUrl { get; set; }  // ← NEW
 }
 
 public class MaterialUpdateDTO {
@@ -20,6 +21,7 @@ public class MaterialUpdateDTO {
     public decimal? CostPerUnit{get;set;}
     public decimal? StockQuantity{get;set;}
     public bool? IsConsumable{get;set;}
+    public string? ImageUrl { get; set; }  // ← NEW
 }
 
 public class MaterialResponseDTO{
@@ -27,8 +29,9 @@ public class MaterialResponseDTO{
     public string MaterialName { get; set; } = string.Empty;
     public string? MaterialUnit { get; set; }
     public decimal? CostPerUnit { get; set; }
-    public decimal StockQuantity { get; set; }
-    public bool IsConsumable { get; set; }
+    public decimal? StockQuantity { get; set; }
+    public bool? IsConsumable { get; set; }
+    public string? ImageUrl { get; set; }  // ← NEW
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

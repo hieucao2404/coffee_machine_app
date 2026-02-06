@@ -70,6 +70,7 @@ app.MapGet("/", () => Results.Ok(new
     }
 })).WithName("Welcome").WithOpenApi();
 
+app.UseStaticFiles();  // Fixed - added ()
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();

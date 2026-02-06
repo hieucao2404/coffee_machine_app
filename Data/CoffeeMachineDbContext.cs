@@ -31,6 +31,7 @@ public class CoffeeMachineDbContext : DbContext
         modelBuilder.Entity<Product>().Property(p => p.Price).HasColumnName("price");
         modelBuilder.Entity<Product>().Property(p => p.Description).HasColumnName("description");
         modelBuilder.Entity<Product>().Property(p => p.IsActive).HasColumnName("is_active");
+        modelBuilder.Entity<Product>().Property(p => p.ImageUrl).HasColumnName("image_url");
         modelBuilder.Entity<Product>().Property(p => p.CreatedAt).HasColumnName("created_at");
         modelBuilder.Entity<Product>().Property(p => p.UpdatedAt).HasColumnName("updated_at");
 
@@ -42,6 +43,7 @@ public class CoffeeMachineDbContext : DbContext
         modelBuilder.Entity<Material>().Property(m => m.CostPerUnit).HasColumnName("cost_per_unit");
         modelBuilder.Entity<Material>().Property(m => m.StockQuantity).HasColumnName("stock_quantity");
         modelBuilder.Entity<Material>().Property(m => m.IsConsumable).HasColumnName("is_consumable");
+        modelBuilder.Entity<Material>().Property(m => m.ImageUrl).HasColumnName("image_url");
         modelBuilder.Entity<Material>().Property(m => m.CreatedAt).HasColumnName("created_at");
         modelBuilder.Entity<Material>().Property(m => m.UpdatedAt).HasColumnName("updated_at");
 

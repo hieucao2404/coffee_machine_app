@@ -67,8 +67,8 @@ public class ProductService : IProductService
             Price = product.Price,
             Description = product.Description,
             IsActive = product.IsActive,
-            CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt,
+            CreatedAt = product.CreatedAt ?? DateTime.UtcNow,
+            UpdatedAt = product.UpdatedAt ?? DateTime.UtcNow,
             Processes = product.Processes.Select(p => new ProcessSummaryDTO
             {
                 ProcessId = p.ProcessId,
@@ -120,6 +120,8 @@ public class ProductService : IProductService
         
         if (updateDto.IsActive.HasValue)
             product.IsActive = updateDto.IsActive.Value;
+        if(updateDto.ImageUrl != null)
+            product.ImageUrl = updateDto.ImageUrl;
 
         product.UpdatedAt = DateTime.UtcNow;
 
@@ -267,8 +269,9 @@ public class ProductService : IProductService
             Price = product.Price,
             Description = product.Description,
             IsActive = product.IsActive,
-            CreatedAt = product.CreatedAt,
-            UpdatedAt = product.UpdatedAt
+            ImageUrl = product.ImageUrl,
+            CreatedAt = product.CreatedAt ?? DateTime.UtcNow,
+            UpdatedAt = product.UpdatedAt ?? DateTime.UtcNow
         };
     }
 
