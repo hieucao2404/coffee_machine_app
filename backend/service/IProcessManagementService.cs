@@ -11,4 +11,5 @@ public interface IProcessManagementService
     Task<List<ProcessOperationResponseDTO>> GetProcessStepsAsync(int processId);
     Task<List<ProcessedMaterialResponseDTO>> GetProcessMaterialsAsync(int processId);
     Task<List<ProcessResponseDTO>> GetProductProcessesAsync(int productId);
+    Task<List<string>> GetProcessMaterialsSequenceAsync(int processId);
 }

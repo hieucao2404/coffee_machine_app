@@ -180,7 +180,8 @@ public class ProcessManagementService : IProcessManagementService
             MaterialName = pm.Material.MaterialName,
             Quantity = pm.Quantity,
             Unit = pm.Material.MaterialUnit,
-            UsageType = pm.UsageType
+            UsageType = pm.UsageType,
+            Sequence = pm.Sequence
         }).ToList();
     }
 
@@ -199,5 +200,25 @@ public class ProcessManagementService : IProcessManagementService
             Note = p.Note,
             IsDefault = p.IsDefault
         }).ToList();
+    }
+
+    public async Task<List<string>> GetProcessMaterialsSequenceAsync(int processId)
+    {
+        var process = await _processRepository.GetProcessWithDetailsAsync(processId);
+        if (process == null)
+        {
+            _logger.LogWarning("Process {ProcessId} not found", processId);
+            return new List<string>();
+        }
+
+        var result = process.ProcessedMaterials
+            .OrderBy(pm => pm.Sequence ?? int.MaxValue)
+            .Select(pm => pm.Material.MaterialName)
+            .ToList();
+
+        _logger.LogInformation("Process {ProcessId} has {Count} materials: {Materials}",
+            processId, result.Count, string.Join(", ", result));
+
+        return result;
     }
 }

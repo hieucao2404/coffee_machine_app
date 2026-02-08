@@ -48,6 +48,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Configure URLs to listen on all network interfaces
+app.Urls.Add("http://0.0.0.0:5000");
+
 // Configure the HTTP request pipeline - Enable Swagger for all environments
 app.UseSwagger();
 app.UseSwaggerUI(options =>

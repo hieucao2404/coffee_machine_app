@@ -63,8 +63,10 @@ SELECT *  FROM operation
 SELECT *  FROM process
 
 SELECT * FROM product
+SELECT process_id, product_id, version, type FROM process;
 
 
+SELECT COUNT(*) FROM processed_material;
 
 -- Add image column to product table
 ALTER TABLE product 

@@ -73,4 +73,32 @@ public class ProcessController : ControllerBase
         var materials = await _processService.GetProcessMaterialsAsync(processId);
         return Ok(materials);
     }
+
+    /// <summary>
+    /// Get materials for a process as ordered list (for STM32)
+    /// Array index = sequence order
+    /// </summary>
+    [HttpGet("{processId}/materials-sequence")]
+    public async Task<ActionResult<List<string>>> GetMaterialsSequence(int processId)
+    {
+        var materials = await _processService.GetProcessMaterialsSequenceAsync(processId);
+        return Ok(materials);
+    }
+
+    /// <summary>
+    /// Get the latest version of processes for a product
+    /// </summary>
+    // [HttpGet("product/{productId}/latest")]
+    // public async Task<ActionResult<List<ProcessResponseDTO>>> GetLatestProductProcesses(int productId)
+    // {
+    //     var allProcesses = await _processService.GetProductProcessesAsync(productId);
+
+    //     if (!allProcesses.Any())
+    //         return Ok(new List<ProcessResponseDTO>());
+
+    //     var maxVersion = allProcesses.Max(p => p.Version);
+    //     var latestProcesses = allProcesses.Where(p => p.Version == maxVersion).ToList();
+
+    //     return Ok(latestProcesses);
+    // }
 }

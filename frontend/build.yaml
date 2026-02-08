@@ -1,0 +1,13 @@
+targets:
+  $default:
+    builders:
+      openapi_generator|openapi_generator:
+        enabled: true
+        options:
+          generatorName: dart-dio
+          inputSpec: http://localhost:5000/swagger/v1/swagger.json
+          outputFolder: lib/generated
+          additionalProperties:
+            pubName: coffee_machine_api
+            nullSafe: true
+            ensureUniqueParams: true

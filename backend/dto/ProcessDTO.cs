@@ -70,6 +70,7 @@ public class ProcessedMaterialResponseDTO
     public decimal Quantity { get; set; }
     public string? Unit { get; set; }
     public string? UsageType { get; set; }
+    public int? Sequence {get; set;}
 }
 
 /// <summary>
