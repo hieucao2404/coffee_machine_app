@@ -114,3 +114,4 @@
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.pdb
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.genruntimeconfig.cache
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/ref/coffee_machine.dll
+/mnt/data/coffee_machine/backend/bin/Debug/net10.0/coffee_machine.staticwebassets.runtime.json

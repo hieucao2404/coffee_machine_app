@@ -10,16 +10,16 @@ namespace CoffeeMachine.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
-    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ProductsController> _logger;
+    private readonly IImageService _imageService;
 
     public ProductsController(
         IProductService productService,
-        IWebHostEnvironment environment,
+        IImageService imageService,
         ILogger<ProductsController> logger)
     {
         _productService = productService;
-        _environment = environment;
+        _imageService = imageService;
         _logger = logger;
     }
 
@@ -69,7 +69,7 @@ public class ProductsController : ControllerBase
     {
         if (image != null)
         {
-            var imageUrl = await SaveImageAsync(image, "products");
+            var imageUrl = await _imageService.SaveImageAsync(image, "products");
             if (imageUrl == null)
                 return BadRequest(new { error = "Failed to upload image" });
             
@@ -94,7 +94,7 @@ public class ProductsController : ControllerBase
     {
         if (image != null)
         {
-            var imageUrl = await SaveImageAsync(image, "products");
+            var imageUrl = await _imageService.SaveImageAsync(image, "products");
             if (imageUrl == null)
                 return BadRequest(new { error = "Failed to upload image" });
             
@@ -217,55 +217,5 @@ public class ProductsController : ControllerBase
     {
         var map = await _productService.GetProductMaterialsMapByNameAsync();
         return Ok(map);
-    }
-
-    // Add the same SaveImageAsync helper method
-    private async Task<string?> SaveImageAsync(IFormFile file, string folder)
-    {
-        try {
-            //Validate file type
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if(!allowedExtensions.Contains(extension)){
-                _logger.LogWarning("Invalid file type: {Extension}", extension);
-                return null;
-            }
-
-            //validate file size
-            if(file.Length > 5 * 1024 * 1024) {
-                _logger.LogWarning("File too large: {Size} bytes ", file.Length);
-                return null;
-            }
-
-            //Create unique filename
-            var fileName = $"{Guid.NewGuid()}{extension}";
-            var uploadPath = Path.Combine(_environment.WebRootPath, "images", folder);
-
-             // Create directory if it doesn't exist
-            if (!Directory.Exists(uploadPath))
-            {
-                Directory.CreateDirectory(uploadPath);
-                _logger.LogInformation("Created directory: {Path}", uploadPath);
-            }
-
-            var filePath = Path.Combine(uploadPath, fileName);
-
-            // Save file
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            var imageUrl = $"/images/{folder}/{fileName}";
-            _logger.LogInformation("Image saved: {ImageUrl}", imageUrl);
-
-            return imageUrl;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to save image");
-            return null;
-        }
     }
 }

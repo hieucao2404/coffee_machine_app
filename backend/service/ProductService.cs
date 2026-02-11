@@ -34,6 +34,7 @@ public class ProductService : IProductService
             Price = createDto.Price,
             Description = createDto.Description,
             IsActive = createDto.IsActive,
+            ImageUrl = createDto.ImageUrl,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -100,6 +101,11 @@ public class ProductService : IProductService
         }
 
         // Update only provided fields
+        if (updateDto.ImageUrl != null)
+        {
+            product.ImageUrl = updateDto.ImageUrl;
+        }
+        
         if (updateDto.ProductCode != null)
             product.ProductCode = updateDto.ProductCode;
         
@@ -348,4 +354,5 @@ public class ProductService : IProductService
         _logger.LogInformation("Product-materials map by name built with {Count} products", map.Products.Count);
         return map;
     }
+
 }
