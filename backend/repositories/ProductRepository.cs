@@ -13,6 +13,18 @@ public class ProductRepository : Repository<Product>, IProductRepository
         _context = context;
     }
 
+    public async Task<Product> UpdateAsync(Product product) {
+        //Ensure Dateime field are UTC
+        if (product.CreatedAt.HasValue && product.CreatedAt.Value.Kind != DateTimeKind.Utc)
+            product.CreatedAt = DateTime.SpecifyKind(product.CreatedAt.Value, DateTimeKind.Utc);
+        
+        if (product.UpdatedAt.HasValue && product.UpdatedAt.Value.Kind != DateTimeKind.Utc)
+            product.UpdatedAt = DateTime.SpecifyKind(product.UpdatedAt.Value, DateTimeKind.Utc);
+
+        await base.UpdateAsync(product);
+        return product;
+    }
+
     public async Task<Product?> GetProductWithProcessesAsync(int productId)
     {
         return await _context.Products

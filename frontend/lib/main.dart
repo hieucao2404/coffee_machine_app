@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'config/app_theme.dart';
 import 'screens/products_test_screen.dart';
 
 void main() {
@@ -13,19 +14,7 @@ class CoffeeMachineApp extends StatelessWidget {
     return MaterialApp(
       title: 'Coffee Machine',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6F4E37), // Coffee brown
-          primary: const Color(0xFF6F4E37),
-          secondary: const Color(0xFFF5E6D3),
-        ),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF6F4E37),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
       home: const ProductsTestScreen(),
     );
   }

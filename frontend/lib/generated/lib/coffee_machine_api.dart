@@ -11,7 +11,7 @@ export 'package:coffee_machine_api/src/serializers.dart';
 export 'package:coffee_machine_api/src/model/date.dart';
 
 export 'package:coffee_machine_api/src/api/brew_api.dart';
-export 'package:coffee_machine_api/src/api/coffee_machine_api.dart';
+export 'package:coffee_machine_api/src/api/coffee_machine_api.dart' hide CoffeeMachineApi;
 export 'package:coffee_machine_api/src/api/material_api.dart';
 export 'package:coffee_machine_api/src/api/materials_api.dart';
 export 'package:coffee_machine_api/src/api/operations_api.dart';

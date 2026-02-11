@@ -247,7 +247,15 @@ class _ProductsTestScreenState extends State<ProductsTestScreen> {
     );
   }
 
-  void _showProductDetails(dynamic product) {
+  void _showProductDetails(dynamic product) async {
+    final bool? hasChanges = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProductDetailScreen(productId: product['productId'], productName: product['productName']),),
+    );
+
+    if(hasChanges == true){
+      _loadProducts();
+    }
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

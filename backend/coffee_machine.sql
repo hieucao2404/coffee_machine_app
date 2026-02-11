@@ -76,3 +76,22 @@ ADD COLUMN image_url VARCHAR(500);
 ALTER TABLE material 
 ADD COLUMN image_url VARCHAR(500);
 
+-- Drop existing foreign key constraints
+ALTER TABLE process_operation 
+DROP CONSTRAINT IF EXISTS process_operation_process_id_fkey;
+
+ALTER TABLE processed_material 
+DROP CONSTRAINT IF EXISTS processed_material_process_id_fkey;
+
+-- Add them back with CASCADE delete
+ALTER TABLE process_operation
+ADD CONSTRAINT process_operation_process_id_fkey 
+FOREIGN KEY (process_id) 
+REFERENCES process(process_id) 
+ON DELETE CASCADE;
+
+ALTER TABLE processed_material
+ADD CONSTRAINT processed_material_process_id_fkey 
+FOREIGN KEY (process_id) 
+REFERENCES process(process_id) 
+ON DELETE CASCADE;

@@ -25,6 +25,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Map<int, List<String>> _processSequences = {};
   bool _isLoading = true;
   String? _error;
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -40,8 +41,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     try {
       final detail = await _productService.getProductDetail(widget.productId);
-      final materials = await _productService.getProductMaterials(widget.productId);
-      final allProcesses = await _productService.getProductProcesses(widget.productId);
+      final materials = await _productService.getProductMaterials(
+        widget.productId,
+      );
+      final allProcesses = await _productService.getProductProcesses(
+        widget.productId,
+      );
 
       print('DEBUG: All processes: $allProcesses'); // ✅ ADD THIS
 
@@ -56,14 +61,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             maxVersion = version;
           }
         }
-        
+
         print('DEBUG: Max version: $maxVersion'); // ✅ ADD THIS
-        
+
         // Keep only processes with the max version
         latestProcesses = allProcesses
             .where((process) => process['version'] == maxVersion)
             .toList();
-        
+
         print('DEBUG: Latest processes: $latestProcesses'); // ✅ ADD THIS
       }
 
@@ -71,7 +76,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       Map<int, List<String>> sequences = {};
       for (var process in latestProcesses) {
         final processId = process['processId'] as int;
-        final sequence = await _productService.getProcessMaterialsSequence(processId);
+        final sequence = await _productService.getProcessMaterialsSequence(
+          processId,
+        );
         sequences[processId] = sequence;
       }
 
@@ -92,21 +99,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.productName),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => _navigateToEdit(),
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) {
+        if (didPop) return;
+
+        //Manually pop and return the _hasChanges flag
+        Navigator.pop(context, _hasChanges);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.productName),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context, _hasChanges); // ✅ Return the flag
+            },
           ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () => _confirmDelete(),
-          ),
-        ],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => _navigateToEdit(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () => _confirmDelete(),
+            ),
+          ],
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 
@@ -200,7 +222,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             _infoRow('Description', _productDetail?['description'] ?? 'N/A'),
             _infoRow(
               'Status',
-              (_productDetail?['isActive'] ?? false) ? '✅ Active' : '❌ Inactive',
+              (_productDetail?['isActive'] ?? false)
+                  ? '✅ Active'
+                  : '❌ Inactive',
             ),
           ],
         ),
@@ -209,106 +233,113 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildProcessInfo() {
-  final processes = _productProcesses;
-  
-  if (processes.isEmpty) {
+    final processes = _productProcesses;
+
+    if (processes.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const Icon(Icons.info_outline, size: 48, color: Colors.orange),
+              const SizedBox(height: 8),
+              const Text('No brewing process defined for this product'),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline, size: 48, color: Colors.orange),
-            const SizedBox(height: 8),
-            const Text('No brewing process defined for this product'),
+            const Text(
+              'Brewing Processes',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            ...processes.map((process) {
+              final processId = process['processId'] as int;
+              final materialSequence = _processSequences[processId] ?? [];
+
+              if (materialSequence.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'No materials defined',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                );
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Material Sequence (STM32):',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...materialSequence.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final materialName = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF6F4E37),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '${index + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                materialName,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),
     );
   }
-
-  return Card(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Brewing Processes',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const Divider(),
-          ...processes.map((process) {
-            final processId = process['processId'] as int;
-            final materialSequence = _processSequences[processId] ?? [];
-            
-            return ExpansionTile(
-              leading: const Icon(Icons.settings, color: Color(0xFF6F4E37)),
-              title: Text('Version ${process['version'] ?? 1}'),  // ✅ FIXED
-              subtitle: Text(process['type'] ?? 'Standard'),       // ✅ FIXED
-              children: [
-                if (materialSequence.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No materials defined', style: TextStyle(color: Colors.grey)),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Material Sequence (STM32):',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                        const SizedBox(height: 8),
-                        ...materialSequence.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final materialName = entry.value;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF6F4E37),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      '${index + 1}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    materialName,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                ),
-                                const Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
-              ],
-            );
-          }),
-        ],
-      ),
-    ),
-  );
-}
 
   Widget _buildMaterialRequirements() {
     if (_materialRequirements == null || _materialRequirements!.isEmpty) {
@@ -317,7 +348,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey),
+              const Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: Colors.grey,
+              ),
               const SizedBox(height: 8),
               const Text('No material requirements defined'),
             ],
@@ -342,36 +377,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               style: TextStyle(color: Colors.grey),
             ),
             const Divider(),
-            ..._materialRequirements!.entries.map((entry) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF6F4E37),
-                      shape: BoxShape.circle,
+            ..._materialRequirements!.entries.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF6F4E37),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      entry.key,
-                      style: const TextStyle(fontSize: 16),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        entry.key,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ),
-                  ),
-                  Text(
-                    '${entry.value}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF6F4E37),
+                    Text(
+                      '${entry.value}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6F4E37),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            )),
+            ),
           ],
         ),
       ),
@@ -394,12 +431,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
         ],
       ),
     );
@@ -417,6 +449,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
 
     if (result == true) {
+      _hasChanges = true;
       _loadProductDetail();
     }
   }
@@ -426,7 +459,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Product'),
-        content: Text('Are you sure you want to delete "${widget.productName}"?'),
+        content: Text(
+          'Are you sure you want to delete "${widget.productName}"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -456,9 +491,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting product: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting product: $e')));
       }
     }
   }

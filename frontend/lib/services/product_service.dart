@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import '../config/api_config.dart';
 
@@ -42,7 +44,6 @@ class ProductService {
       final response = await _dio.get('/api/process/$processId/materials');
       return response.data as List<dynamic>;
       }catch(e){
-
        print('Error getting process materials: $e');
       return [];
       }
@@ -231,4 +232,6 @@ Future<List<dynamic>> getProductProcesses(int productId) async {
       return [];
     }
   }
+
+  
 }
