@@ -17,8 +17,6 @@ public class ProcessRepository : Repository<Process>, IProcessRepository
     {
         return await _context.Processes
             .Include(p => p.Product)
-            .Include(p => p.ProcessOperations)
-                .ThenInclude(po => po.Operation)
             .Include(p => p.ProcessedMaterials)
                 .ThenInclude(pm => pm.Material)
             .FirstOrDefaultAsync(p => p.ProcessId == processId);
@@ -28,8 +26,6 @@ public class ProcessRepository : Repository<Process>, IProcessRepository
     {
         return await _context.Processes
             .Where(p => p.ProductId == productId)
-            .Include(p => p.ProcessOperations)
-                .ThenInclude(po => po.Operation)
             .ToListAsync();
     }
 
@@ -37,8 +33,6 @@ public class ProcessRepository : Repository<Process>, IProcessRepository
     {
         return await _context.Processes
             .Where(p => p.ProductId == productId && p.IsDefault)
-            .Include(p => p.ProcessOperations)
-                .ThenInclude(po => po.Operation)
             .Include(p => p.ProcessedMaterials)
                 .ThenInclude(pm => pm.Material)
             .FirstOrDefaultAsync();

@@ -1,5 +1,9 @@
 namespace CoffeeMachine.Models;
 
+/// <summary>
+/// Process - A brewing recipe for a product
+/// Contains only ordered materials - STM32 handles operations
+/// </summary>
 public class Process
 {
     public int ProcessId { get; set; }
@@ -10,6 +14,5 @@ public class Process
     public bool IsDefault { get; set; } = false;
 
     public Product? Product { get; set; }
-    public ICollection<ProcessOperation> ProcessOperations { get; set; } = new List<ProcessOperation>();
     public ICollection<ProcessedMaterial> ProcessedMaterials { get; set; } = new List<ProcessedMaterial>();
 }

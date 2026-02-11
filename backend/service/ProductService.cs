@@ -74,7 +74,7 @@ public class ProductService : IProductService
             {
                 ProcessId = p.ProcessId,
                 ProcessName = p.Note ?? $"Process #{p.ProcessId}",
-                StepCount = p.ProcessOperations.Count,
+                StepCount = p.ProcessedMaterials.Count, // Count materials instead of operations
                 RequiredMaterials = p.ProcessedMaterials
                     .Select(pm => pm.Material?.MaterialName ?? "Unknown")
                     .Distinct()
@@ -346,7 +346,7 @@ public class ProductService : IProductService
                     ProductCode = product.ProductCode ?? $"PROD{product.ProductId}",
                     Price = product.Price,
                     Materials = materials,
-                    StepCount = process.ProcessOperations.Count
+                    StepCount = process.ProcessedMaterials.Count // Count materials instead of operations
                 };
             }
         }

@@ -9,23 +9,20 @@ public class ProcessManagementService : IProcessManagementService
 {
     private readonly IProcessRepository _processRepository;
     private readonly IProductRepository _productRepository;
-    private readonly IMaterialRepository _materialRepository;  // ← FIXED: IMaterialRepository
-    private readonly IOperationRepository _operationRepository;
-    private readonly CoffeeMachineDbContext _context;  // ← FIXED: CoffeeMachineDbContext
+    private readonly IMaterialRepository _materialRepository;
+    private readonly CoffeeMachineDbContext _context;
     private readonly ILogger<ProcessManagementService> _logger;
 
     public ProcessManagementService(
         IProcessRepository processRepository,
         IProductRepository productRepository,
         IMaterialRepository materialRepository,
-        IOperationRepository operationRepository,
         CoffeeMachineDbContext context,
         ILogger<ProcessManagementService> logger)
     {
         _processRepository = processRepository;
         _productRepository = productRepository;
         _materialRepository = materialRepository;
-        _operationRepository = operationRepository;
         _context = context;
         _logger = logger;
     }
@@ -57,34 +54,8 @@ public class ProcessManagementService : IProcessManagementService
 
         _logger.LogInformation("Process {ProcessId} created", process.ProcessId);
 
-        // 3. Add process operations (THE SEQUENCE STEPS!)
-        foreach (var step in dto.Steps.OrderBy(s => s.Sequence))
-        {
-            var operation = await _operationRepository.GetByIdAsync(step.OperationId);
-            if (operation == null)
-            {
-                _logger.LogWarning("Operation {OperationId} not found, skipping", step.OperationId);
-                continue;
-            }
-
-            var processOp = new ProcessOperation
-            {
-                ProcessId = process.ProcessId,
-                OperationId = step.OperationId,
-                Sequence = step.Sequence,
-                Speed = step.Speed,
-                Temperature = step.Temperature,
-                Duration = step.Duration,
-                CurrentLimitMa = step.CurrentLimitMa,
-                TargetPosition = step.TargetPosition,
-                StopCondition = step.StopCondition
-            };
-
-            _context.Set<ProcessOperation>().Add(processOp);
-        }
-
-        // 4. Add processed materials
-        foreach (var mat in dto.Materials)
+        // 3. Add processed materials (ordered by sequence)
+        foreach (var mat in dto.Materials.OrderBy(m => m.Sequence))
         {
             var material = await _materialRepository.GetByIdAsync(mat.MaterialId);
             if (material == null)
@@ -99,7 +70,7 @@ public class ProcessManagementService : IProcessManagementService
                 MaterialId = mat.MaterialId,
                 Quantity = mat.Quantity,
                 UsageType = mat.UsageType,
-                Sequence = mat.Sequence  // Link material to specific step
+                Sequence = mat.Sequence
             };
 
             _context.Set<ProcessedMaterial>().Add(processedMat);
@@ -107,8 +78,8 @@ public class ProcessManagementService : IProcessManagementService
 
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Process {ProcessId} complete with {StepCount} steps and {MaterialCount} materials",
-            process.ProcessId, dto.Steps.Count, dto.Materials.Count);
+        _logger.LogInformation("Process {ProcessId} complete with {MaterialCount} materials",
+            process.ProcessId, dto.Materials.Count);
 
         return new ProcessResponseDTO
         {
@@ -140,31 +111,6 @@ public class ProcessManagementService : IProcessManagementService
             Note = process.Note,
             IsDefault = process.IsDefault
         };
-    }
-
-    public async Task<List<ProcessOperationResponseDTO>> GetProcessStepsAsync(int processId)
-    {
-        var process = await _processRepository.GetProcessWithDetailsAsync(processId);
-        if (process == null)
-            return new List<ProcessOperationResponseDTO>();
-
-        return process.ProcessOperations
-            .OrderBy(po => po.Sequence)
-            .Select(po => new ProcessOperationResponseDTO
-            {
-                ProcessOperationId = po.ProcessOperationId,
-                ProcessId = po.ProcessId,
-                OperationId = po.OperationId,
-                OperationName = po.Operation.OperationName,
-                OperationType = po.Operation.Type,
-                Sequence = po.Sequence,
-                Speed = po.Speed,
-                Temperature = po.Temperature,
-                Duration = po.Duration,
-                CurrentLimitMa = po.CurrentLimitMa,
-                TargetPosition = po.TargetPosition,
-                StopCondition = po.StopCondition
-            }).ToList();
     }
 
     public async Task<List<ProcessedMaterialResponseDTO>> GetProcessMaterialsAsync(int processId)

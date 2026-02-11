@@ -29,9 +29,6 @@ public class ProductRepository : Repository<Product>, IProductRepository
     {
         return await _context.Products
             .Include(p => p.Processes)
-                .ThenInclude(pr => pr.ProcessOperations)
-                    .ThenInclude(po => po.Operation)
-            .Include(p => p.Processes)
                 .ThenInclude(pr => pr.ProcessedMaterials)
                     .ThenInclude(pm => pm.Material)
             .FirstOrDefaultAsync(p => p.ProductId == productId);

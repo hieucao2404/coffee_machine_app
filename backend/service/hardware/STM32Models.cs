@@ -1,8 +1,9 @@
 namespace CoffeeMachine.service.Hardware;
 
 /// <summary>
-/// Simplified brew command - Backend sends ONLY material info per step
-/// STM32 handles all hardware control (pump, heat, grind) based on operation name
+/// Simplified brew command - Backend sends ONLY ordered array of materials
+/// STM32 firmware handles ALL brewing logic based on material order
+/// Example: [Water, Coffee Beans, Cup] → STM32 knows to heat, grind, dispense
 /// </summary>
 public class STM32BrewCommand
 {
@@ -10,32 +11,20 @@ public class STM32BrewCommand
     public int ProductId { get; set; }
     public int ProcessId { get; set; }
     public string ProductName { get; set; } = string.Empty;
-    public List<MaterialBasedStep> Steps { get; set; } = new();
+    public List<SimplifiedMaterial> Materials { get; set; } = new();
 }
 
 /// <summary>
-/// Each step contains: operation name + material (if used)
-/// STM32 firmware knows what to do based on operation name
-/// Material quantity is the only dynamic parameter
+/// Material data sent to STM32 - order in array represents sequence
+/// STM32 firmware determines operations based on material type and position
 /// </summary>
-public class MaterialBasedStep
-{
-    public int Sequence { get; set; }
-    public string OperationName { get; set; } = string.Empty; // "HEAT_WATER", "GRIND_BEANS", etc.
-    public string OperationType { get; set; } = string.Empty;  // "Heater", "Motor", "Pump", etc.
-    public StepMaterial? Material { get; set; }  // null if no material used in this step
-}
-
-/// <summary>
-/// Material information for a step
-/// </summary>
-public class StepMaterial
+public class SimplifiedMaterial
 {
     public int MaterialId { get; set; }
-    public string MaterialName { get; set; } = string.Empty;
+    public string MaterialName { get; set; } = string.Empty; // "Water", "Coffee Beans", "Cup"
     public decimal Quantity { get; set; }
     public string Unit { get; set; } = string.Empty;  // "g", "ml", "piece"
-    public string UsageType { get; set; } = string.Empty; // "Ingredient", "Container"
+    public int Sequence { get; set; }  // Position in brewing process
 }
 
 public class STM32Response

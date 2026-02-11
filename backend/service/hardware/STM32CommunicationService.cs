@@ -66,12 +66,12 @@ public class STM32CommunicationService : ISTM32CommunicationService
             Success = true,
             Status = "COMPLETED",
             Message = $"{command.CommandType} completed successfully (simulated)",
-            CurrentStep = command.Steps.Count,
+            CurrentStep = command.Materials.Count,
             Data = new Dictionary<string, object>
             {
                 ["simulation"] = true,
                 ["command_type"] = command.CommandType,
-                ["steps_count"] = command.Steps.Count,
+                ["materials_count"] = command.Materials.Count,
                 ["product"] = command.ProductName,
                 ["duration_ms"] = delay
             }

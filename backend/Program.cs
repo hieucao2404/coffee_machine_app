@@ -22,15 +22,12 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 builder.Services.AddScoped<IProcessRepository, ProcessRepository>();
-builder.Services.AddScoped<IOperationRepository, OperationRepository>();
 
 // Register Services
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
-builder.Services.AddScoped<IOperationService, OperationService>();
 builder.Services.AddScoped<IProcessManagementService, ProcessManagementService>();
-builder.Services.AddScoped<IOperationService, OperationService>();
 
 // Register Brewing Services
 builder.Services.AddScoped<IProcessParameterService, ProcessParameterService>();

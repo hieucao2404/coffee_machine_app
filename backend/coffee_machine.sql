@@ -77,21 +77,31 @@ ALTER TABLE material
 ADD COLUMN image_url VARCHAR(500);
 
 -- Drop existing foreign key constraints
-ALTER TABLE process_operation 
-DROP CONSTRAINT IF EXISTS process_operation_process_id_fkey;
 
 ALTER TABLE processed_material 
 DROP CONSTRAINT IF EXISTS processed_material_process_id_fkey;
 
--- Add them back with CASCADE delete
-ALTER TABLE process_operation
-ADD CONSTRAINT process_operation_process_id_fkey 
-FOREIGN KEY (process_id) 
-REFERENCES process(process_id) 
-ON DELETE CASCADE;
 
 ALTER TABLE processed_material
 ADD CONSTRAINT processed_material_process_id_fkey 
 FOREIGN KEY (process_id) 
 REFERENCES process(process_id) 
 ON DELETE CASCADE;
+
+-- Drop the process_operation table (has foreign keys to both process and operation)
+DROP TABLE IF EXISTS process_operation CASCADE;
+
+-- Drop the operation table
+DROP TABLE IF EXISTS operation CASCADE;
+
+-- Verify tables are dropped
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+  AND table_name IN ('operation', 'process_operation');
+
+-- Show remaining tables
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+ORDER BY table_name;

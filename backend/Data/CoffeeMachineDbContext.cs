@@ -7,9 +7,7 @@ public class CoffeeMachineDbContext : DbContext
 {
     public DbSet<Product> Products { get; set; }
     public DbSet<Material> Materials { get; set; }
-    public DbSet<Operation> Operations { get; set; }
     public DbSet<Process> Processes { get; set; }
-    public DbSet<ProcessOperation> ProcessOperations { get; set; }
     public DbSet<ProcessedMaterial> ProcessedMaterials { get; set; }
 
     public CoffeeMachineDbContext(DbContextOptions<CoffeeMachineDbContext> options) 
@@ -47,12 +45,6 @@ public class CoffeeMachineDbContext : DbContext
         modelBuilder.Entity<Material>().Property(m => m.CreatedAt).HasColumnName("created_at");
         modelBuilder.Entity<Material>().Property(m => m.UpdatedAt).HasColumnName("updated_at");
 
-        // Map Operation entity
-        modelBuilder.Entity<Operation>().ToTable("operation");
-        modelBuilder.Entity<Operation>().Property(o => o.OperationId).HasColumnName("operation_id");
-        modelBuilder.Entity<Operation>().Property(o => o.OperationName).HasColumnName("operation_name");
-        modelBuilder.Entity<Operation>().Property(o => o.Type).HasColumnName("type");
-
         // Map Process entity
         modelBuilder.Entity<Process>().ToTable("process");
         modelBuilder.Entity<Process>().Property(pr => pr.ProcessId).HasColumnName("process_id");
@@ -61,19 +53,6 @@ public class CoffeeMachineDbContext : DbContext
         modelBuilder.Entity<Process>().Property(pr => pr.Note).HasColumnName("note");
         modelBuilder.Entity<Process>().Property(pr => pr.Type).HasColumnName("type");
         modelBuilder.Entity<Process>().Property(pr => pr.IsDefault).HasColumnName("is_default");
-
-        // Map ProcessOperation entity
-        modelBuilder.Entity<ProcessOperation>().ToTable("process_operation");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.ProcessOperationId).HasColumnName("process_operation_id");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.ProcessId).HasColumnName("process_id");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.OperationId).HasColumnName("operation_id");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.Sequence).HasColumnName("sequence");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.Speed).HasColumnName("speed");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.Temperature).HasColumnName("temperature");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.Duration).HasColumnName("duration");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.CurrentLimitMa).HasColumnName("current_limit_ma");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.TargetPosition).HasColumnName("target_position");
-        modelBuilder.Entity<ProcessOperation>().Property(po => po.StopCondition).HasColumnName("stop_condition");
 
         // Map ProcessedMaterial entity
         modelBuilder.Entity<ProcessedMaterial>().ToTable("processed_material");
@@ -90,16 +69,6 @@ public class CoffeeMachineDbContext : DbContext
             .HasOne(p => p.Product)
             .WithMany(pr => pr.Processes)
             .HasForeignKey(p => p.ProductId);
-
-        modelBuilder.Entity<ProcessOperation>()
-            .HasOne(po => po.Process)
-            .WithMany(p => p.ProcessOperations)
-            .HasForeignKey(po => po.ProcessId);
-
-        modelBuilder.Entity<ProcessOperation>()
-            .HasOne(po => po.Operation)
-            .WithMany(o => o.ProcessOperations)
-            .HasForeignKey(po => po.OperationId);
 
         modelBuilder.Entity<ProcessedMaterial>()
             .HasOne(pm => pm.Process)

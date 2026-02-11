@@ -67,7 +67,7 @@ class ProductListItem extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${(product['price'] ?? 0).toStringAsFixed(2)}',
+                        '${(product['price'] ?? 0).toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

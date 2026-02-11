@@ -54,18 +54,19 @@ public class ProcessController : ControllerBase
         return Ok(processes);
     }
 
-    /// <summary>
-    /// Get process steps IN SEQUENCE ORDER
-    /// </summary>
-    [HttpGet("{processId}/steps")]
-    public async Task<ActionResult<List<ProcessOperationResponseDTO>>> GetSteps(int processId)
-    {
-        var steps = await _processService.GetProcessStepsAsync(processId);
-        return Ok(steps);
-    }
+    // REMOVED: Operation steps no longer used - materials define the sequence
+    // /// <summary>
+    // /// Get process steps IN SEQUENCE ORDER
+    // /// </summary>
+    // [HttpGet("{processId}/steps")]
+    // public async Task<ActionResult<List<ProcessOperationResponseDTO>>> GetSteps(int processId)
+    // {
+    //     var steps = await _processService.GetProcessStepsAsync(processId);
+    //     return Ok(steps);
+    // }
 
     /// <summary>
-    /// Get materials needed for process
+    /// Get materials needed for process (in sequence order)
     /// </summary>
     [HttpGet("{processId}/materials")]
     public async Task<ActionResult<List<ProcessedMaterialResponseDTO>>> GetMaterials(int processId)

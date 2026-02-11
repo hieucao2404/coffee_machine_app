@@ -61,7 +61,7 @@ public class ProcessExecutionService : IProcessExecutionService
                 ProductId = 0,
                 ProcessId = 0,
                 ProductName = "Initialization",
-                Steps = new List<MaterialBasedStep>()
+                Materials = new List<SimplifiedMaterial>()
             };
 
             var response = await _stm32.SendCommandAsync(command);
@@ -105,7 +105,6 @@ public class ProcessExecutionService : IProcessExecutionService
             }
 
             result.ExecutionLog.Add($"✓ Loaded: {parameters.ProductName}");
-            result.ExecutionLog.Add($"  - {parameters.Steps.Count} operations");
             result.ExecutionLog.Add($"  - {parameters.Materials.Count} materials required");
 
             // Validate materials
@@ -119,9 +118,9 @@ public class ProcessExecutionService : IProcessExecutionService
             result.ExecutionLog.Add("✓ All materials available");
 
             // Build STM32 command
-            result.ExecutionLog.Add("🔧 Building command for STM32...");
+            result.ExecutionLog.Add("🔧 Building material list for STM32...");
             var command = await _parameterService.BuildSTM32BrewCommandAsync(processId);
-            result.ExecutionLog.Add($"✓ Command built with {command.Steps.Count} steps");
+            result.ExecutionLog.Add($"✓ Sending {command.Materials.Count} materials in sequence");
 
             // Send to STM32
             result.ExecutionLog.Add("📤 Sending command to STM32...");
@@ -179,7 +178,7 @@ public class ProcessExecutionService : IProcessExecutionService
                 ProductId = 0,
                 ProcessId = 0,
                 ProductName = "Cleaning Cycle",
-                Steps = new List<MaterialBasedStep>()
+                Materials = new List<SimplifiedMaterial>()
             };
 
             var response = await _stm32.SendCommandAsync(command);
