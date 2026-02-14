@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/services/brew_service.dart';
 import '../services/product_service.dart';
 import '../config/api_config.dart';
 import 'product_edit_screen.dart';
@@ -26,10 +27,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isLoading = true;
   String? _error;
   bool _hasChanges = false;
+  bool _isBrewing = false;
+  late final BrewService _brewService;
 
   @override
   void initState() {
     super.initState();
+    _brewService = BrewService();
     _loadProductDetail();
   }
 
@@ -331,6 +335,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                       );
                     }),
+                    const SizedBox(height: 16),
+                    // Start Brewing Button - Moved here!
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isBrewing ? null : () => _startBrewing(processId),
+                        icon: _isBrewing 
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.play_arrow),
+                        label: Text(_isBrewing ? 'Brewing...' : 'Start Brewing'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6F4E37),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -494,6 +525,82 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error deleting product: $e')));
+      }
+    }
+  }
+
+  Future<void> _startBrewing(int processId) async {
+    setState(() => _isBrewing = true);
+    
+    try {
+      final result = await _brewService.brewProcess(processId);
+      
+      if (mounted) {
+        // Show success dialog with STM32 command details
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 28),
+                SizedBox(width: 8),
+                Text('Brewing Started!'),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'STM32 Command Sent:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Text(
+                      result.toString(),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '☕ Your coffee is being prepared!',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start brewing: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isBrewing = false);
       }
     }
   }

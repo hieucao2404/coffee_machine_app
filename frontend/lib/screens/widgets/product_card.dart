@@ -1,27 +1,40 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../../utils/colors.dart';
 import '../../../config/api_config.dart';
 
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> product;
   final VoidCallback onTap;
-  final VoidCallback onEdit;
+  final VoidCallback onAction; // Renamed from onEdit to reflect dynamic action
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onTap,
-    required this.onEdit,
+    required this.onAction,
   });
 
   @override
   Widget build(BuildContext context) {
+    // 1. Determine Status (Mock logic - replace with your real inventory logic)
     final String name = product['productName'] ?? 'Product';
     final double price = (product['price'] ?? 0).toDouble();
     final String? imageUrl = product['imageUrl'];
-    final bool isActive = product['isActive'] ?? false;
-    final String status = _getStatus();
+    final bool isActive = product['isActive'] ?? true;
+    
+    // Logic to match your screenshot examples:
+    // In real app, check: if (product['stock'] < 10) ...
+    String status = 'Ready'; 
+    if (!isActive) {
+      status = 'Unavailable';
+    } else if (name.contains('Latte')) { 
+      status = 'Low Milk'; // Example for UI demo
+    } else if (name.contains('Mocha')) {
+      status = 'Empty';    // Example for UI demo
+    }
+
+    // 2. Define Styles based on status
+    final styles = _getStyles(status);
 
     return GestureDetector(
       onTap: onTap,
@@ -31,144 +44,161 @@ class ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with status badge
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  child: AspectRatio(
-                    aspectRatio: 1,
+            // --- IMAGE SECTION ---
+            Expanded(
+              flex: 4,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Product Image
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                     child: imageUrl != null && imageUrl.isNotEmpty
                         ? CachedNetworkImage(
                             imageUrl: ApiConfig.getImageUrl(imageUrl),
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Colors.grey[200],
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) =>
-                                _buildPlaceholder(),
+                            placeholder: (context, url) => Container(color: Colors.grey[100]),
+                            errorWidget: (context, url, error) => _buildPlaceholder(),
                           )
                         : _buildPlaceholder(),
                   ),
-                ),
-                // Status Badge (top-right)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: _buildStatusBadge(status),
-                ),
-                // WiFi indicator (if connected to machine)
-                if (isActive)
+                  
+                  // Status Icon (Top Right)
                   Positioned(
-                    top: 12,
-                    left: 12,
+                    top: 8,
+                    right: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                          ),
-                        ],
                       ),
-                      child: const Icon(
-                        Icons.wifi,
-                        color: AppColors.statusReady,
+                      child: Icon(
+                        styles.iconData,
                         size: 16,
+                        color: styles.statusColor,
                       ),
                     ),
                   ),
-              ],
+
+                  // Warning Banner (Bottom of Image) - Only for issues
+                  if (status != 'Ready')
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        color: Colors.black.withOpacity(0.6),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          status == 'Unavailable' ? 'UNAVAILABLE' : 'REFILL NEEDED',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            // Product Info
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+
+            // --- DETAILS SECTION ---
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        // Price Row
+                        Row(
+                          children: [
+                            Text(
+                              '\$${price.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF5D4037), // Coffee Brown
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              status == 'Ready' ? 'Ready' : status,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: styles.statusColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '\$${price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.coffeeBrown,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(status).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+
+                    // Dynamic Action Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 36, // Fixed height for consistency
+                      child: ElevatedButton(
+                        onPressed: onAction,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: styles.buttonBgColor,
+                          foregroundColor: styles.buttonTextColor,
+                          elevation: 0,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                         ),
                         child: Text(
-                          status,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: _getStatusColor(status),
+                          styles.buttonLabel,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onEdit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.coffeeBrown,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Edit',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -179,73 +209,60 @@ class ProductCard extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: Colors.grey[200],
+      color: Colors.grey[100],
       child: const Center(
-        child: Icon(
-          Icons.coffee,
-          size: 48,
-          color: AppColors.textLight,
-        ),
+        child: Icon(Icons.coffee, size: 40, color: Colors.brown),
       ),
     );
   }
 
-  Widget _buildStatusBadge(String status) {
-    IconData icon;
-    Color color;
-
-    switch (status.toLowerCase()) {
-      case 'ready':
-        icon = Icons.check_circle;
-        color = AppColors.statusReady;
-        break;
-      case 'low stock':
-      case 'low milk':
-        icon = Icons.warning;
-        color = AppColors.statusLowStock;
-        break;
-      case 'empty':
-        icon = Icons.error;
-        color = AppColors.statusEmpty;
-        break;
+  // Helper to keep the build method clean
+  _CardStyles _getStyles(String status) {
+    switch (status) {
+      case 'Low Milk':
+      case 'Low Stock':
+        return _CardStyles(
+          statusColor: Colors.orange,
+          iconData: Icons.warning_amber_rounded,
+          buttonBgColor: const Color(0xFFFFF3E0), // Light Orange
+          buttonTextColor: Colors.orange[900]!,
+          buttonLabel: 'Restock',
+        );
+      case 'Empty':
+      case 'Unavailable':
+        return _CardStyles(
+          statusColor: Colors.grey,
+          iconData: Icons.do_not_disturb_on,
+          buttonBgColor: Colors.grey[200]!,
+          buttonTextColor: Colors.grey[700]!,
+          buttonLabel: 'Fix Error',
+        );
+      case 'Ready':
       default:
-        icon = Icons.info;
-        color = AppColors.textMedium;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Icon(icon, color: color, size: 16),
-    );
-  }
-
-  String _getStatus() {
-    // Logic to determine status based on inventory
-    // This would check material availability
-    return 'Ready'; // Placeholder
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'ready':
-        return AppColors.statusReady;
-      case 'low stock':
-      case 'low milk':
-        return AppColors.statusLowStock;
-      case 'empty':
-        return AppColors.statusEmpty;
-      default:
-        return AppColors.textMedium;
+        return _CardStyles(
+          statusColor: Colors.green,
+          iconData: Icons.wifi, // Or check_circle
+          buttonBgColor: const Color(0xFFF5F5F5), // Light Grey
+          buttonTextColor: Colors.black87,
+          buttonLabel: 'Edit',
+        );
     }
   }
+}
+
+// Simple data class for styles
+class _CardStyles {
+  final Color statusColor;
+  final IconData iconData;
+  final Color buttonBgColor;
+  final Color buttonTextColor;
+  final String buttonLabel;
+
+  _CardStyles({
+    required this.statusColor,
+    required this.iconData,
+    required this.buttonBgColor,
+    required this.buttonTextColor,
+    required this.buttonLabel,
+  });
 }

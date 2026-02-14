@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/home/home_screen.dart';
 import 'config/app_theme.dart';
 import 'screens/products_test_screen.dart';
 
@@ -15,7 +16,7 @@ class CoffeeMachineApp extends StatelessWidget {
       title: 'Coffee Machine',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const ProductsTestScreen(),
+      home: const HomeScreen(),
     );
   }
 }

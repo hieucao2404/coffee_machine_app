@@ -12,6 +12,7 @@ public class STM32BrewCommand
     public int ProcessId { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public List<SimplifiedMaterial> Materials { get; set; } = new();
+    public string[] MaterialSequence { get; set; } = Array.Empty<string>();
 }
 
 /// <summary>

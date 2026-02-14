@@ -60,6 +60,9 @@ public class ProcessParameterService : IProcessParameterService
             throw new InvalidOperationException($"Process {processId} not found");
         }
 
+        var orderedMaterials = process.ProcessedMaterials.OrderBy(pm => pm.Sequence ?? 0)
+        .ToList();
+
         var command = new STM32BrewCommand
         {
             CommandType = "BREW",
@@ -76,10 +79,13 @@ public class ProcessParameterService : IProcessParameterService
                     Unit = pm.Material?.MaterialUnit ?? "",
                     Sequence = pm.Sequence ?? 0
                 })
-                .ToList()
+                .ToList(),
+                MaterialSequence = orderedMaterials.Select(pm => pm.Material?.MaterialName ?? "Unknwn").ToArray()
         };
 
         _logger.LogInformation($"Built STM32 command for {command.ProductName} with {command.Materials.Count} materials");
+        _logger.LogInformation($"Material sequence: {string.Join(" → ", command.MaterialSequence)}");
+    
         
         return command;
     }
