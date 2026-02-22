@@ -13,6 +13,8 @@ public class CoffeeMachineDbContext : DbContext
     public CoffeeMachineDbContext(DbContextOptions<CoffeeMachineDbContext> options) 
         : base(options)
     {
+        // Configure PostgreSQL to use UTC timestamps
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

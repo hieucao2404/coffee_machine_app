@@ -100,23 +100,6 @@ class _StockEditScreenState extends State<StockEditScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Material Type
-                TextFormField(
-                  controller: _typeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Material Type *',
-                    prefixIcon: Icon(Icons.category),
-                    hintText: 'e.g., Liquid, Solid, Powder',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter material type';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
                 // Unit
                 TextFormField(
                   controller: _unitController,
@@ -253,65 +236,65 @@ class _StockEditScreenState extends State<StockEditScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSaving = true);
+  setState(() => _isSaving = true);
 
-    try {
-      if (_isEditing) {
-        // Update existing material
-        await _materialService.adjustStock(
-          widget.material!['materialId'],
-          double.parse(_stockController.text),
-          _reasonController.text.isEmpty 
-              ? 'Stock adjustment' 
-              : _reasonController.text,
-        );
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Material updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context, true);
-        }
-      } else {
-        // Create new material
-        await _materialService.createMaterial(
-          _nameController.text,
-          _typeController.text,
-          _unitController.text,
-          double.parse(_stockController.text),
-          double.parse(_minStockController.text),
-        );
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Material created successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context, true);
-        }
-      }
-    } catch (e) {
+  try {
+    if (_isEditing) {
+      // Update existing material
+      await _materialService.setStock(
+        widget.material!['materialId'],
+        double.parse(_stockController.text),
+        _reasonController.text.isEmpty 
+            ? 'Stock adjustment' 
+            : _reasonController.text,
+      );
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+          const SnackBar(
+            content: Text('Stock updated successfully'),
+            backgroundColor: Colors.green,
           ),
         );
+        Navigator.pop(context, true);
       }
-    } finally {
+    } else {
+      // Create new material - REMOVED materialType parameter
+      await _materialService.createMaterial(
+        name: _nameController.text,
+        unit: _unitController.text,
+        stockQuantity: double.parse(_stockController.text),
+        costPerUnit: double.tryParse(_minStockController.text), // Or use a separate field
+        isConsumable: true,
+      );
+      
       if (mounted) {
-        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Material created successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
       }
     }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isSaving = false);
+    }
   }
+}
 
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(

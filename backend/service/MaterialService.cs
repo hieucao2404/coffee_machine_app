@@ -207,8 +207,13 @@ public class MaterialService : IMaterialService
             StockQuantity = material.StockQuantity,
             IsConsumable = material.IsConsumable,
             ImageUrl = material.ImageUrl,
-            CreatedAt = material.CreatedAt ?? DateTime.UtcNow,
-            UpdatedAt = material.UpdatedAt ?? DateTime.UtcNow
+            // Ensure DateTime is UTC
+            CreatedAt = material.CreatedAt.HasValue 
+                ? DateTime.SpecifyKind(material.CreatedAt.Value, DateTimeKind.Utc)
+                : DateTime.UtcNow,
+            UpdatedAt = material.UpdatedAt.HasValue 
+                ? DateTime.SpecifyKind(material.UpdatedAt.Value, DateTimeKind.Utc)
+                : DateTime.UtcNow
         };
     }
 }

@@ -25,40 +25,43 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
     _material = widget.material;
   }
 
-  Future<void> _adjustStock(double amount) async {
-    setState(() => _isLoading = true);
-    try {
-      final currentStock = (_material['stockQuantity'] ?? 0).toDouble();
-      final newStock = (currentStock + amount).clamp(0.0, double.infinity);
-      
-      await _materialService.adjustStock(
-        _material['materialId'],
-        newStock,
-        amount > 0 ? 'Added $amount' : 'Removed ${amount.abs()}',
+ Future<void> _adjustStock(double amount) async {
+  setState(() => _isLoading = true);
+  try {
+    // Use ADD or SUBTRACT instead of calculating new stock
+    final adjustmentType = amount > 0 ? 'ADD' : 'SUBTRACT';
+    final adjustmentAmount = amount.abs();
+    
+    final result = await _materialService.adjustStock(
+      materialId: _material['materialId'],
+      quantity: adjustmentAmount,
+      adjustmentType: adjustmentType,
+      notes: amount > 0 ? 'Added $adjustmentAmount' : 'Removed $adjustmentAmount',
+    );
+
+    setState(() {
+      // Update with the returned value from backend
+      _material['stockQuantity'] = result['stockQuantity'];
+      _isLoading = false;
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(amount > 0 ? 'Stock increased by $adjustmentAmount' : 'Stock decreased by $adjustmentAmount'),
+          backgroundColor: const Color(0xFF34a853),
+        ),
       );
-
-      setState(() {
-        _material['stockQuantity'] = newStock;
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(amount > 0 ? 'Stock increased by $amount' : 'Stock decreased by ${amount.abs()}'),
-            backgroundColor: const Color(0xFF34a853),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adjusting stock: $e')),
-        );
-      }
+    }
+  } catch (e) {
+    setState(() => _isLoading = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adjusting stock: $e')),
+      );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
