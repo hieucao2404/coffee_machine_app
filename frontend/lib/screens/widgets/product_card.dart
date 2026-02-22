@@ -5,7 +5,7 @@ import '../../../config/api_config.dart';
 class ProductCard extends StatelessWidget {
   final Map<String, dynamic> product;
   final VoidCallback onTap;
-  final VoidCallback onAction; // Renamed from onEdit to reflect dynamic action
+  final VoidCallback onAction;
 
   const ProductCard({
     super.key,
@@ -16,24 +16,19 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Determine Status (Mock logic - replace with your real inventory logic)
     final String name = product['productName'] ?? 'Product';
     final double price = (product['price'] ?? 0).toDouble();
     final String? imageUrl = product['imageUrl'];
     final bool isActive = product['isActive'] ?? true;
     
-    // Logic to match your screenshot examples:
-    // In real app, check: if (product['stock'] < 10) ...
-    String status = 'Ready'; 
+    // Use real status from product data
+    String status = 'Ready';
     if (!isActive) {
       status = 'Unavailable';
-    } else if (name.contains('Latte')) { 
-      status = 'Low Milk'; // Example for UI demo
-    } else if (name.contains('Mocha')) {
-      status = 'Empty';    // Example for UI demo
+    } else if (product['status'] != null) {
+      status = product['status'];
     }
 
-    // 2. Define Styles based on status
     final styles = _getStyles(status);
 
     return GestureDetector(
@@ -41,12 +36,12 @@ class ProductCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -61,7 +56,7 @@ class ProductCard extends StatelessWidget {
                 children: [
                   // Product Image
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                     child: imageUrl != null && imageUrl.isNotEmpty
                         ? CachedNetworkImage(
                             imageUrl: ApiConfig.getImageUrl(imageUrl),
@@ -115,68 +110,66 @@ class ProductCard extends StatelessWidget {
               ),
             ),
 
-            // --- DETAILS SECTION ---
             Expanded(
               flex: 3,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    // Title
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),  // Changed from 3 to 2
+                    // Price Row
+                    Row(
                       children: [
-                        // Title
                         Text(
-                          name,
+                          '\$${price.toStringAsFixed(2)}',
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF5D4037),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        // Price Row
-                        Row(
-                          children: [
-                            Text(
-                              '\$${price.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF5D4037), // Coffee Brown
-                              ),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 3,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            status == 'Ready' ? 'Ready' : status,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: styles.statusColor,
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: 4,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              status == 'Ready' ? 'Ready' : status,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: styles.statusColor,
-                              ),
-                            ),
-                          ],
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
+                    const Spacer(),
 
                     // Dynamic Action Button
                     SizedBox(
                       width: double.infinity,
-                      height: 36, // Fixed height for consistency
+                      height: 31,  // Changed from 32 to 31
                       child: ElevatedButton(
                         onPressed: onAction,
                         style: ElevatedButton.styleFrom(
@@ -185,13 +178,13 @@ class ProductCard extends StatelessWidget {
                           elevation: 0,
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         child: Text(
                           styles.buttonLabel,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -216,7 +209,6 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  // Helper to keep the build method clean
   _CardStyles _getStyles(String status) {
     switch (status) {
       case 'Low Milk':
@@ -224,7 +216,7 @@ class ProductCard extends StatelessWidget {
         return _CardStyles(
           statusColor: Colors.orange,
           iconData: Icons.warning_amber_rounded,
-          buttonBgColor: const Color(0xFFFFF3E0), // Light Orange
+          buttonBgColor: const Color(0xFFFFF3E0),
           buttonTextColor: Colors.orange[900]!,
           buttonLabel: 'Restock',
         );
@@ -241,8 +233,8 @@ class ProductCard extends StatelessWidget {
       default:
         return _CardStyles(
           statusColor: Colors.green,
-          iconData: Icons.wifi, // Or check_circle
-          buttonBgColor: const Color(0xFFF5F5F5), // Light Grey
+          iconData: Icons.wifi,
+          buttonBgColor: const Color(0xFFF5F5F5),
           buttonTextColor: Colors.black87,
           buttonLabel: 'Edit',
         );
@@ -250,7 +242,6 @@ class ProductCard extends StatelessWidget {
   }
 }
 
-// Simple data class for styles
 class _CardStyles {
   final Color statusColor;
   final IconData iconData;

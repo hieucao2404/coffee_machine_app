@@ -22,8 +22,16 @@ public interface IProductService
     // Product Availability
     Task<bool> IsProductAvailableAsync(int productId);
     Task<Dictionary<string, decimal>> GetProductMaterialRequirementsAsync(int productId);
+    Task<CanMakeProductResult> CanMakeProductAsync(int productId);
 
     // service/IProductService.cs - Add these methods at the end
     Task<Dictionary<int, List<MaterialRequirementDTO>>> GetAllProductMaterialsMapAsync();
     Task<ProductMaterialMapDTO> GetProductMaterialsMapByNameAsync();
+}
+
+public class CanMakeProductResult
+{
+    public bool CanMake { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public List<string> MissingMaterials { get; set; } = new();
 }

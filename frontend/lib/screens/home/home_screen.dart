@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/product_detail_screen.dart';
 import 'package:frontend/screens/product_edit_screen.dart';
+import 'package:frontend/screens/stock/stock_screen.dart';
 import 'package:frontend/screens/widgets/product_card.dart';
-import 'package:frontend/services/brew_service.dart';
 import 'package:frontend/services/product_service.dart';
 import 'package:frontend/services/material_service.dart';
+import 'package:frontend/services/sales_services.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,14 +17,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ProductService _productService = ProductService();
   final MaterialService _materialService = MaterialService();
-  final BrewService _brewService = BrewService();
-  bool _isBrewing = false;
+  final SalesService _salesService = SalesService(); // Add this
 
-  List<dynamic>? _products;
-  List<dynamic>? _allProducts;
+  List<Map<String, dynamic>>? _products;
+  List<Map<String, dynamic>>? _allProducts;
   List<dynamic>? _lowStockMaterials;
   bool _isLoading = false;
   String _selectedCategory = 'All';
+
+  // Sales data
+  double _totalRevenue = 0.0;
+  int _totalCupsSold = 0;
 
   final List<String> _categories = [
     'All',
@@ -45,40 +49,45 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoading = true);
     try {
       final products = await _productService.getAllProducts();
-      final lowStock = await _materialService.getLowStockMaterials(
-        threshold: 50,
+      final lowStock = await _materialService.getLowStockMaterials(threshold: 50);
+      final revenue = await _salesService.getTotalRevenue();
+      final cupsSold = await _salesService.getTotalCupsSold();
+      
+      // Check availability for each product
+      final productsWithStatus = await Future.wait<Map<String, dynamic>>(
+        products.map((product) async {
+          try {
+            final canMake = await _productService.canMakeProduct(product['productId']);
+            product['status'] = canMake['canMake'] == true ? 'Ready' : (canMake['reason'] ?? 'Unknown');
+            return product;
+          } catch (e) {
+            print('Error checking product: $e');
+            product['status'] = 'Ready';
+            return product;
+          }
+        }),
       );
-
+      
       setState(() {
-        _allProducts = products;
-        _products = products;
+        _allProducts = productsWithStatus;
+        _products = productsWithStatus;
         _lowStockMaterials = lowStock;
+        _totalRevenue = revenue;
+        _totalCupsSold = cupsSold;
         _isLoading = false;
       });
     } catch (e) {
       print('Error loading data: $e');
       setState(() => _isLoading = false);
     }
-  }
-
-  void _filterByCategory(String category) {
+  }  void _filterByCategory(String category) {
     setState(() {
       _selectedCategory = category;
       if (category == 'All') {
         _products = _allProducts;
-        print('Showing all products: ${_products?.length}');
       } else {
-        if (_allProducts != null) {
-          for (var product in _allProducts!) {
-            print(
-              'Product: ${product['productName']}, Category: ${product['category']}',
-            );
-          }
-        }
         _products = _allProducts?.where((product) {
-          final productCategory = (product['category'] ?? '')
-              .toString()
-              .toLowerCase();
+          final productCategory = (product['category'] ?? '').toString().toLowerCase();
           final categoryLower = category.toLowerCase();
           return productCategory == categoryLower;
         }).toList();
@@ -161,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            childAspectRatio: 0.65,
+                            childAspectRatio: 0.75,
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
                           ),
@@ -179,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   productName: product['productName'],
                                 ),
                               ),
-                            ).then((_) => _loadData());
+                            ).then((_) => _loadData()); // Reload to update sales
                           },
                           onAction: () {},
                         );
@@ -322,8 +331,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDashboardCards() {
-    final lowStockMaterial = _lowStockMaterials?.isNotEmpty == true
-        ? _lowStockMaterials!.first
+    final lowStockMaterial = _lowStockMaterials?.isNotEmpty == true 
+        ? _lowStockMaterials!.first 
         : null;
     final stockQuantity = (lowStockMaterial?['stockQuantity'] ?? 15).toDouble();
     final stockPercentage = (stockQuantity / 100).clamp(0.0, 1.0);
@@ -332,10 +341,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Low Stock Card
+          // Revenue Card
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),  // Reduced from 14
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -356,22 +365,105 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(7),
+                        padding: const EdgeInsets.all(6),  // Reduced from 7
+                        decoration: BoxDecoration(
+                          color: Colors.green[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.attach_money, color: Colors.green[700], size: 14),  // Reduced from 16
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),  // Reduced
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.trending_up, size: 7, color: Colors.green[700]),  // Reduced from 8
+                            const SizedBox(width: 2),
+                            Text(
+                              'Today',
+                              style: TextStyle(
+                                fontSize: 8,  // Reduced from 9
+                                color: Colors.green[700],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),  // Reduced from 8
+                  Text(
+                    'Revenue',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 10, fontWeight: FontWeight.w500),  // Reduced from 11
+                  ),
+                  const SizedBox(height: 2),
+                  Flexible(  // Added Flexible
+                    child: FittedBox(  // Added FittedBox to prevent overflow
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '\$${_totalRevenue.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),  // Reduced from 8
+                  Row(
+                    children: [
+                      Icon(Icons.coffee, size: 11, color: Colors.grey[600]),  // Reduced from 12
+                      const SizedBox(width: 3),  // Reduced from 4
+                      Flexible(  // Added Flexible
+                        child: Text(
+                          '$_totalCupsSold cups',  // Shortened text
+                          style: TextStyle(fontSize: 9, color: Colors.grey[600]),  // Reduced from 10
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Low Stock Card
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),  // Reduced from 14
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+                border: Border.all(color: Colors.grey.withOpacity(0.05)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),  // Reduced from 7
                         decoration: BoxDecoration(
                           color: Colors.orange[100],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
-                          Icons.inventory_2_outlined,
-                          color: Colors.orange[600],
-                          size: 16,
-                        ),
+                        child: Icon(Icons.inventory_2_outlined, color: Colors.orange[600], size: 14),  // Reduced from 16
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),  // Reduced
                         decoration: BoxDecoration(
                           color: Colors.red[50],
                           borderRadius: BorderRadius.circular(10),
@@ -379,16 +471,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.arrow_downward,
-                              size: 8,
-                              color: Colors.red[600],
-                            ),
+                            Icon(Icons.warning, size: 7, color: Colors.red[600]),  // Reduced from 8
                             const SizedBox(width: 2),
                             Text(
-                              '5%',
+                              '${_lowStockMaterials?.length ?? 0}',
                               style: TextStyle(
-                                fontSize: 9,
+                                fontSize: 8,  // Reduced from 9
                                 color: Colors.red[600],
                                 fontWeight: FontWeight.bold,
                               ),
@@ -398,27 +486,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),  // Reduced from 8
                   Text(
-                    'Low Stock',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    'Stock Alert',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 10, fontWeight: FontWeight.w500),  // Reduced from 11
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    lowStockMaterial?['materialName'] ?? 'Milk',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                  Flexible(  // Added Flexible
+                    child: Text(
+                      lowStockMaterial?['materialName'] ?? 'All Good',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),  // Reduced from 18
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),  // Reduced from 8
                   Container(
                     height: 4,
                     decoration: BoxDecoration(
@@ -430,122 +512,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       widthFactor: stockPercentage,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.red,
+                          color: stockPercentage < 0.2 ? Colors.red : Colors.orange,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Queue Card
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: _primary,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primary.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.receipt_long_outlined,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.arrow_upward,
-                              size: 8,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 2),
-                            Text(
-                              '3%',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Queue',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    '12 Orders',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: List.generate(3, (index) {
-                      final colors = [
-                        Colors.amber[100],
-                        Colors.amber[200],
-                        Colors.amber[300],
-                      ];
-                      return Align(
-                        widthFactor: 0.7,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _primary, width: 1.5),
-                            color: colors[index],
-                          ),
-                          child: Icon(Icons.person, size: 10, color: _primary),
-                        ),
-                      );
-                    }),
                   ),
                 ],
               ),
@@ -562,21 +533,13 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         const Text(
           'Coffee Menu',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         Row(
           children: [
             Text(
               'See All',
-              style: TextStyle(
-                color: _primary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(color: _primary, fontSize: 14, fontWeight: FontWeight.w500),
             ),
             Icon(Icons.chevron_right, size: 16, color: _primary),
           ],
@@ -599,25 +562,18 @@ class _HomeScreenState extends State<HomeScreen> {
             child: GestureDetector(
               onTap: () => _filterByCategory(category),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 9,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
                 decoration: BoxDecoration(
                   color: isSelected ? _primary : Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: _primary.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : [],
-                  border: isSelected
-                      ? null
-                      : Border.all(color: Colors.grey.withOpacity(0.05)),
+                  boxShadow: isSelected ? [
+                    BoxShadow(
+                      color: _primary.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ] : [],
+                  border: isSelected ? null : Border.all(color: Colors.grey.withOpacity(0.05)),
                 ),
                 child: Text(
                   category,
@@ -665,12 +621,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _navItem(IconData icon, String label, bool isSelected) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        if (label == 'Stock') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const StockScreen(),
+            ),
+          );
+        }
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: isSelected ? _primary : Colors.grey[400], size: 28),
+          Icon(
+            icon,
+            color: isSelected ? _primary : Colors.grey[400],
+            size: 28,
+          ),
           const SizedBox(height: 4),
           Text(
             label,

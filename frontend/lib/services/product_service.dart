@@ -17,10 +17,11 @@ class ProductService {
   // ============ READ Operations ============
   
   /// Get all products
-  Future<List<dynamic>> getAllProducts() async {
+  Future<List<Map<String, dynamic>>> getAllProducts() async {
     try {
       final response = await _dio.get('/api/products');
-      return response.data as List;
+      final data = response.data as List;
+      return data.map((item) => Map<String, dynamic>.from(item as Map)).toList();
     } catch (e) {
       print('Error getting products: $e');
       rethrow;
@@ -230,6 +231,19 @@ Future<List<dynamic>> getProductProcesses(int productId) async {
     } catch (e) {
       print('Error getting active products: $e');
       return [];
+    }
+  }
+
+  /// Check if a product can be made based on current material stock
+  Future<Map<String, dynamic>> canMakeProduct(int productId) async {
+    try {
+      final response = await _dio.get('/api/products/$productId/can-make');
+      // Convert dynamic map to Map<String, dynamic>
+      final data = response.data;
+      return Map<String, dynamic>.from(data);
+    } catch (e) {
+      print('Error checking if product can be made: $e');
+      return {'canMake': true, 'reason': ''};
     }
   }
 

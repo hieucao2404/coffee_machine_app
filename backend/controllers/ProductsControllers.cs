@@ -218,4 +218,23 @@ public class ProductsController : ControllerBase
         var map = await _productService.GetProductMaterialsMapByNameAsync();
         return Ok(map);
     }
+
+    /// <summary>
+    /// Check if a product can be made based on current material stock levels
+    /// Returns availability status and reason if unavailable
+    /// </summary>
+    [HttpGet("{id}/can-make")]
+    public async Task<ActionResult> CanMakeProduct(int id)
+    {
+        try
+        {
+            var result = await _productService.CanMakeProductAsync(id);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking if product {ProductId} can be made", id);
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

@@ -1,4 +1,14 @@
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.csproj.AssemblyReference.cache
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/rpswa.dswa.cache.json
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.GeneratedMSBuildEditorConfig.editorconfig
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.AssemblyInfoInputs.cache
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.AssemblyInfo.cs
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.csproj.CoreCompileInputs.cache
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.MvcApplicationPartsAssemblyInfo.cs
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.MvcApplicationPartsAssemblyInfo.cache
+/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.sourcelink.json
 /mnt/data/coffee_machine/backend/bin/Debug/net10.0/appsettings.json
+/mnt/data/coffee_machine/backend/bin/Debug/net10.0/coffee_machine.staticwebassets.runtime.json
 /mnt/data/coffee_machine/backend/bin/Debug/net10.0/coffee_machine.staticwebassets.endpoints.json
 /mnt/data/coffee_machine/backend/bin/Debug/net10.0/coffee_machine
 /mnt/data/coffee_machine/backend/bin/Debug/net10.0/coffee_machine.deps.json
@@ -90,15 +100,6 @@
 /mnt/data/coffee_machine/backend/bin/Debug/net10.0/runtimes/osx-x64/native/libSystem.IO.Ports.Native.dylib
 /mnt/data/coffee_machine/backend/bin/Debug/net10.0/runtimes/unix/lib/net8.0/System.IO.Ports.dll
 /mnt/data/coffee_machine/backend/bin/Debug/net10.0/runtimes/win/lib/net8.0/System.IO.Ports.dll
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.csproj.AssemblyReference.cache
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/rpswa.dswa.cache.json
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.GeneratedMSBuildEditorConfig.editorconfig
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.AssemblyInfoInputs.cache
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.AssemblyInfo.cs
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.csproj.CoreCompileInputs.cache
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.MvcApplicationPartsAssemblyInfo.cs
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.MvcApplicationPartsAssemblyInfo.cache
-/mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.sourcelink.json
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/rjimswa.dswa.cache.json
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/rjsmrazor.dswa.cache.json
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
@@ -114,4 +115,3 @@
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.pdb
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/coffee_machine.genruntimeconfig.cache
 /mnt/data/coffee_machine/backend/obj/Debug/net10.0/ref/coffee_machine.dll
-/mnt/data/coffee_machine/backend/bin/Debug/net10.0/coffee_machine.staticwebassets.runtime.json

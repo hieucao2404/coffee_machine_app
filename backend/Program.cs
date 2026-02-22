@@ -28,6 +28,8 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IProcessManagementService, ProcessManagementService>();
+// Register this service as Singleton
+builder.Services.AddSingleton<ISalesTracker, InMemorySalesTracker>();
 
 // Register Brewing Services
 builder.Services.AddScoped<IProcessParameterService, ProcessParameterService>();

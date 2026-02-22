@@ -56,7 +56,7 @@ CREATE TABLE processed_material (
   sequence INTEGER  -- Links to process_operation.sequence (NULL = used across all steps or not tied to specific step)
 );
 
-SELECT * FROM processed_material
+SELECT * FROM material
 
 SELECT *  FROM process_operation
 SELECT *  FROM operation

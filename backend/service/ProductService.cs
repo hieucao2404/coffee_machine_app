@@ -355,4 +355,69 @@ public class ProductService : IProductService
         return map;
     }
 
+    public async Task<CanMakeProductResult> CanMakeProductAsync(int productId)
+    {
+        var result = new CanMakeProductResult
+        {
+            CanMake = true,
+            Reason = "",
+            MissingMaterials = new List<string>()
+        };
+
+        // Get product
+        var product = await _productRepository.GetByIdAsync(productId);
+        if (product == null)
+        {
+            result.CanMake = false;
+            result.Reason = "Product not found";
+            return result;
+        }
+
+        // Check if product is active
+        if (!product.IsActive)
+        {
+            result.CanMake = false;
+            result.Reason = "Product unavailable";
+            return result;
+        }
+
+        // Get product's process with materials
+        var productDetail = await _productRepository.GetProductWithProcessesAsync(productId);
+        var process = productDetail?.Processes?.FirstOrDefault();
+        
+        if (process == null || !process.ProcessedMaterials.Any())
+        {
+            // No process defined, assume can be made
+            return result;
+        }
+
+        // Check each material's stock level
+        foreach (var pm in process.ProcessedMaterials)
+        {
+            var material = await _materialRepository.GetByIdAsync(pm.MaterialId);
+            
+            if (material == null)
+            {
+                result.CanMake = false;
+                result.MissingMaterials.Add($"Material ID {pm.MaterialId} not found");
+                continue;
+            }
+
+            if (material.StockQuantity < pm.Quantity)
+            {
+                result.CanMake = false;
+                result.MissingMaterials.Add($"{material.MaterialName} (need {pm.Quantity}{material.MaterialUnit}, have {material.StockQuantity}{material.MaterialUnit})");
+            }
+        }
+
+        if (!result.CanMake)
+        {
+            result.Reason = result.MissingMaterials.Count == 1 
+                ? $"Low stock: {result.MissingMaterials[0]}" 
+                : $"Low stock on {result.MissingMaterials.Count} materials";
+        }
+
+        return result;
+    }
+
 }

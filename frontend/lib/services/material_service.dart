@@ -45,4 +45,53 @@ class MaterialService {
       return null;
     }
   }
+  /// Create a new material
+  Future<Map<String, dynamic>> createMaterial(
+    String name,
+    String type,
+    String unit,
+    double stockQuantity,
+    double minStockLevel,
+  ) async {
+    try {
+      final response = await _dio.post('/api/material', data: {
+        'materialName': name,
+        'materialType': type,
+        'materialUnit': unit,
+        'stockQuantity': stockQuantity,
+        'minStockLevel': minStockLevel,
+      });
+      return response.data;
+    } catch (e) {
+      print('Error creating material: $e');
+      rethrow;
+    }
+  }
+
+  /// Update material stock
+  Future<void> adjustStock(
+    int materialId,
+    double newQuantity,
+    String reason,
+  ) async {
+    try {
+      await _dio.put('/api/material/$materialId/stock', data: {
+        'quantity': newQuantity,
+        'reason': reason,
+      });
+    } catch (e) {
+      print('Error adjusting stock: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a material
+  Future<void> deleteMaterial(int materialId) async {
+    try {
+      await _dio.delete('/api/material/$materialId');
+    } catch (e) {
+      print('Error deleting material: $e');
+      rethrow;
+    }
+  }
 }

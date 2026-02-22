@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/services/brew_service.dart';
 import '../services/product_service.dart';
@@ -533,7 +534,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() => _isBrewing = true);
     
     try {
-      final result = await _brewService.brewProcess(processId);
+      final brewService = BrewService(); // Or use your DI method
+      final result = await brewService.brewProcess(processId);
       
       if (mounted) {
         // Show success dialog with STM32 command details
@@ -589,12 +591,70 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         );
       }
+    } on DioException catch (e) {
+      if (mounted) {
+        // Get error message from response
+        String errorMessage = 'Failed to start brewing';
+        
+        if (e.response?.data != null) {
+          if (e.response!.data is Map) {
+            errorMessage = e.response!.data['error'] ?? 
+                          e.response!.data['message'] ?? 
+                          e.response!.data['title'] ?? 
+                          errorMessage;
+          } else {
+            errorMessage = e.response!.data.toString();
+          }
+        } else if (e.message != null) {
+          errorMessage = e.message!;
+        }
+
+        // Show detailed error dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.error, color: Colors.red, size: 28),
+                SizedBox(width: 8),
+                Text('Brewing Failed'),
+              ],
+            ),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Error Details:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(errorMessage),
+                const SizedBox(height: 12),
+                if (e.response != null) ...[
+                  Text(
+                    'Status Code: ${e.response!.statusCode}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to start brewing: $e'),
+            content: Text('Unexpected error: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
